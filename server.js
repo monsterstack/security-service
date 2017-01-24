@@ -37,6 +37,7 @@ const main = () => {
   /** Init and handle lifecycle **/
   server.init().then(() => {
     let app = server.getApp();
+
     // Set View Engine and Static Paths
     app.set('view engine', 'ejs');
     app.use('/portal', express.static(path.join(__dirname + '/portal')));
