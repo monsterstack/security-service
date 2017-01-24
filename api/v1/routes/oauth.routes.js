@@ -31,7 +31,7 @@ module.exports = (app) => {
    *      200:
    *        description: AuthorizationResponse
    */
-  app.get('/security/oauth', controller.authorise(app));
+  app.get('/api/v1/security/oauth', controller.authorise(app));
 
   /**
    * @swagger
@@ -50,5 +50,5 @@ module.exports = (app) => {
    *      200:
    *        description: TokenResponse
    */
-  app.post('/security/oauth/token', controller.token());
+  app.get('/api/v1/security/token/:tokenHashAccessCode', controller.token(app));
 }

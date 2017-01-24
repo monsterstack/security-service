@@ -23,4 +23,9 @@
  *      type: object
  *      required:
  *        - redirect_uri
+ *   TokenResponse:
+ *      type: object
+ *      required:
+ *        - access_token
+ *  
  */
