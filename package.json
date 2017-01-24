@@ -34,6 +34,7 @@
     "glob": "^7.1.1",
     "http-status": "^0.2.3",
     "ip": "^1.1.4",
+    "jsonwebtoken": "^7.2.1",
     "needle": "^1.4.3",
     "node-uuid": "^1.4.7",
     "optimist": "^0.6.1",
