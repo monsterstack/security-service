@@ -1,5 +1,6 @@
 'use strict';
 const Promise = require('promise');
+const HttpStatus = require('http-status');
 const Error = require('core-server').Error;
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
@@ -85,6 +86,8 @@ class AuthService {
   }
 
   _lookupTenant(clientId, clientSecret) {
+    let self = this;
+    let unavailError = new Error(HttpStatus.SERVICE_UNAVAILABLE, 'Tenant Service Not Available');
     let p = new Promise((resolve, reject) => {
       let tenant = {
         apiKey: clientId,
@@ -92,8 +95,27 @@ class AuthService {
       };
 
       // Use Proxy to talk to Tenant Service.
-
-      resolve(tenant);
+      if(self.proxy) {
+        self.proxy.apiForServiceType('TenantService').then((service) => {
+          console.log(service);
+          if(service) {
+            // Call Tenant Service
+            service.tenants.findTenantByApiKey(clientId).then((tenant) => {
+              resolve(tenant.obj);
+            }).catch((err) => {
+              reject(err);
+            });
+            resolve(tenant);
+          } else {
+            reject(unavailError);
+          }
+        }).catch((err) => {
+          reject(unavailError);
+        });
+      } else {
+        // What is the error in this case?
+        reject(unavailError);
+      }
     });
 
     return p;
