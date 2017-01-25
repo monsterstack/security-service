@@ -3,6 +3,19 @@
 /**
  * @swagger
  * definitions:
+ *   Error:
+ *     type: object
+ *     required:
+ *        - errorMessage
+ *     properties:
+ *        errorMessage:
+ *          type: string
+ *   Health:
+ *     type: object
+ *     required:
+ *        - cpuPercentUsage
+ *        - totalMemPercentageUsage
+ *        - loadAvg
  *   AuthorizationRequest:
  *     type: object
  *     required:
@@ -27,5 +40,5 @@
  *      type: object
  *      required:
  *        - access_token
- *  
+ *
  */

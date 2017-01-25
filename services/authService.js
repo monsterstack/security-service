@@ -6,6 +6,9 @@ const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 const SEED = "shhhhhhh!";
 
+// Dependent Services - TYPES
+const TENANT_SERVICE_TYPE = 'TenantService';
+
 class AuthService {
   constructor(proxy) {
     this.proxy = proxy;
@@ -96,11 +99,11 @@ class AuthService {
 
       // Use Proxy to talk to Tenant Service.
       if(self.proxy) {
-        self.proxy.apiForServiceType('TenantService').then((service) => {
+        self.proxy.apiForServiceType(TENANT_SERVICE_TYPE).then((service) => {
           console.log(service);
           if(service) {
             // Call Tenant Service
-            service.tenants.findTenantByApiKey(clientId).then((tenant) => {
+            service.tenants.getTenant(clientId).then((tenant) => {
               resolve(tenant.obj);
             }).catch((err) => {
               reject(err);
