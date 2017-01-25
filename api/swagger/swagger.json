@@ -1,1 +1,151 @@
-{}
+{
+  "info": {
+    "title": "Security Service",
+    "description": "This service is responsible for security",
+    "version": "1.0.0"
+  },
+  "swagger": "2.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "description": "Get Health of Service",
+        "operationId": "getHealth",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health",
+            "type": "object",
+            "schema": {
+              "$ref": null
+            }
+          }
+        }
+      }
+    },
+    "/security/oauth": {
+      "get": {
+        "description": "Request Authorization",
+        "operationId": "authorise",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "x_client_id",
+            "description": "Client Id",
+            "in": "header",
+            "required": true
+          },
+          {
+            "name": "x_client_secret",
+            "description": "Client Secret",
+            "in": "header",
+            "required": true
+          },
+          {
+            "name": "grant_type",
+            "description": "Grant Type (i.e. token)",
+            "in": "query",
+            "required": true
+          },
+          {
+            "name": "scope",
+            "description": "Scope",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AuthorizationResponse"
+          }
+        }
+      }
+    },
+    "/security/oauth/token": {
+      "get": {
+        "description": "Request Token",
+        "operationId": "token",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tokenHashAccessCode",
+            "description": "Token Hash Access Code",
+            "in": "path",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TokenResponse"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Error": {
+      "type": "object",
+      "required": [
+        "errorMessage"
+      ],
+      "properties": {
+        "errorMessage": {
+          "type": "string"
+        }
+      }
+    },
+    "Health": {
+      "type": "object",
+      "required": [
+        "cpuPercentUsage",
+        "totalMemPercentageUsage",
+        "loadAvg"
+      ]
+    },
+    "AuthorizationRequest": {
+      "type": "object",
+      "required": [
+        "response_type",
+        "client_id",
+        "client_secret",
+        "scope"
+      ],
+      "properties": {
+        "response_type": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_secret": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "AuthorizationResponse": {
+      "type": "object",
+      "required": [
+        "redirect_uri"
+      ]
+    },
+    "TokenResponse": {
+      "type": "object",
+      "required": [
+        "access_token"
+      ]
+    }
+  },
+  "responses": {},
+  "parameters": {},
+  "securityDefinitions": {},
+  "tags": []
+}
