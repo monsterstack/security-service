@@ -12,11 +12,11 @@ module.exports = (app) => {
    *    produces:
    *      - application/json
    *    parameters:
-   *      - name: x_client_id
+   *      - name: x-client-id
    *        description: Client Id
    *        in: header
    *        required: true
-   *      - name: x_client_secret
+   *      - name: x-client-secret
    *        description: Client Secret
    *        in: header
    *        required: true
@@ -31,6 +31,9 @@ module.exports = (app) => {
    *    responses:
    *      200:
    *        description: AuthorizationResponse
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/AuthorizationResponse'
    */
   app.get('/api/v1/security/oauth', controller.authorise(app));
 
@@ -51,6 +54,9 @@ module.exports = (app) => {
    *    responses:
    *      200:
    *        description: TokenResponse
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/TokenResponse'
    */
   app.get('/api/v1/security/token/:tokenHashAccessCode', controller.token(app));
 }

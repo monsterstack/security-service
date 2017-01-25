@@ -4,7 +4,6 @@ const HttpStatus = require('http-status');
 const Error = require('core-server').Error;
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
-const SEED = "shhhhhhh!";
 
 // Dependent Services - TYPES
 const TENANT_SERVICE_TYPE = 'TenantService';
@@ -82,7 +81,7 @@ class AuthService {
 
   _storeAuthToken(authRequest) {
     let p = new Promise((resolve, reject) => {
-      resolve(jwt.sign(authRequest, SEED));
+      resolve(jwt.sign(authRequest, authRequest.clientSecret));
     });
 
     return p;
@@ -92,31 +91,29 @@ class AuthService {
     let self = this;
     let unavailError = new Error(HttpStatus.SERVICE_UNAVAILABLE, 'Tenant Service Not Available');
     let p = new Promise((resolve, reject) => {
-      let tenant = {
-        apiKey: clientId,
-        apiSecret: clientSecret
-      };
-
       // Use Proxy to talk to Tenant Service.
       if(self.proxy) {
         self.proxy.apiForServiceType(TENANT_SERVICE_TYPE).then((service) => {
-          console.log(service);
           if(service) {
             // Call Tenant Service
-            service.tenants.getTenant(clientId).then((tenant) => {
-              resolve(tenant.obj);
-            }).catch((err) => {
+            service.api.tenants.getTenant({id: clientId}, (tenant) => {
+              resolve(tenant);
+            }, (err) => {
+              console.log(err);
               reject(err);
             });
-            resolve(tenant);
           } else {
+            console.log('No service found');
             reject(unavailError);
           }
         }).catch((err) => {
+          console.log('error');
+          console.log(err);
           reject(unavailError);
         });
       } else {
         // What is the error in this case?
+        console.log('No Proxy');
         reject(unavailError);
       }
     });

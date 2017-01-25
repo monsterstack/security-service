@@ -9,8 +9,13 @@
     "/health": {
       "get": {
         "description": "Get Health of Service",
-        "operationId": "getHealth",
+        "tags": [
+          "health"
+        ],
         "produces": [
+          "application/json"
+        ],
+        "consumes": [
           "application/json"
         ],
         "responses": {
@@ -18,7 +23,7 @@
             "description": "Health",
             "type": "object",
             "schema": {
-              "$ref": null
+              "$ref": "#/definitions/Health"
             }
           }
         }
@@ -33,13 +38,13 @@
         ],
         "parameters": [
           {
-            "name": "x_client_id",
+            "name": "x-client-id",
             "description": "Client Id",
             "in": "header",
             "required": true
           },
           {
-            "name": "x_client_secret",
+            "name": "x-client-secret",
             "description": "Client Secret",
             "in": "header",
             "required": true
@@ -59,7 +64,11 @@
         ],
         "responses": {
           "200": {
-            "description": "AuthorizationResponse"
+            "description": "AuthorizationResponse",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/AuthorizationResponse"
+            }
           }
         }
       }
@@ -82,7 +91,11 @@
         ],
         "responses": {
           "200": {
-            "description": "TokenResponse"
+            "description": "TokenResponse",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
           }
         }
       }
@@ -108,29 +121,6 @@
         "loadAvg"
       ]
     },
-    "AuthorizationRequest": {
-      "type": "object",
-      "required": [
-        "response_type",
-        "client_id",
-        "client_secret",
-        "scope"
-      ],
-      "properties": {
-        "response_type": {
-          "type": "string"
-        },
-        "client_id": {
-          "type": "string"
-        },
-        "client_secret": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        }
-      }
-    },
     "AuthorizationResponse": {
       "type": "object",
       "required": [
@@ -147,5 +137,22 @@
   "responses": {},
   "parameters": {},
   "securityDefinitions": {},
-  "tags": []
+  "tags": [
+    {
+      "name": "error",
+      "description": "Everything you need to know about Error"
+    },
+    {
+      "name": "health",
+      "description": "Everything you need to know about Health"
+    },
+    {
+      "name": "authorizationResponses",
+      "description": "Everything you need to know about AuthorizationResponses"
+    },
+    {
+      "name": "tokenResponses",
+      "description": "Everything you need to know about TokenResponses"
+    }
+  ]
 }
