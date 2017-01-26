@@ -32,6 +32,13 @@
  *          type: number
  *        loadAvg:
  *          type: number
+ *   AccessTokenValidity:
+ *      type: object
+ *      required:
+ *        - valid
+ *      properties:
+ *        valid:
+ *          type: boolean
  *   AuthorizationResponse:
  *      type: object
  *      required:

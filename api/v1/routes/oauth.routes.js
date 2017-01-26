@@ -34,6 +34,11 @@ module.exports = (app) => {
    *        type: object
    *        schema:
    *          $ref: '#/definitions/AuthorizationResponse'
+   *      401:
+   *        description: Error
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/Error'
    */
   app.get('/api/v1/security/oauth', controller.authorise(app));
 
@@ -57,6 +62,40 @@ module.exports = (app) => {
    *        type: object
    *        schema:
    *          $ref: '#/definitions/TokenResponse'
+   *      404:
+   *        description: Error
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/Error'
    */
   app.get('/api/v1/security/token/:tokenHashAccessCode', controller.token(app));
+
+  /**
+   * @swagger
+   * /security/oauth/token/_check:
+   *  get:
+   *    description: Check Token Validity
+   *    operationId: check
+   *    produces:
+   *      - application/json
+   *    consumes:
+   *      - application/json
+   *    parameters:
+   *      - name: access-token
+   *        description: accessToken
+   *        in: header
+   *        required: true
+   *    responses:
+   *      200:
+   *        description: TokenValidity
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/AccessTokenValidity'
+   *      404:
+   *        description: Error
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/Error'
+   */
+  app.get('/api/v1/security/token/_check', controller.isTokenValid(app));
 }

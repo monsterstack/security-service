@@ -2,7 +2,7 @@
 
 const appRoot = require('app-root-path');
 const HttpStatus = require('http-status');
-const Error = require('core-server').Error;
+const ServiceError = require('core-server').ServiceError;
 
 const AuthService = require(appRoot+'/services/authService.js');
 
@@ -23,8 +23,8 @@ const authorise = (app) => {
     let headers = req.headers;
 
     let authRequest = {
-      client_id: headers['x_client_id'],
-      client_secret: headers['x_client_secret'],
+      client_id: headers['x-client-id'],
+      client_secret: headers['x-client-secret'],
       grant: grant,
       scope: scope
     };
@@ -34,14 +34,14 @@ const authorise = (app) => {
       res.status(HttpStatus.OK).send(authResponse);
     }).catch((err) => {
       if(err.status) {
-        if(err instanceof Error) {
+        if(err instanceof ServiceError) {
           // Can we do duck typing?? Maybe check instance???
           err.writeResponse(res);
         } else {
-          new Error(err.status, err.message).writeResponse(res);
+          new ServiceError(err.status, err.message).writeResponse(res);
         }
       } else {
-        new Error(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
+        new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
       }
     });
   }
@@ -54,12 +54,30 @@ const token = (app) => {
     authService.token(tokenHashAccessCode).then((token) => {
       res.status(HttpStatus.OK).send(token);
     }).catch((err) => {
-      new Error(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
+      new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
     });
 
+  }
+}
+
+const isTokenValid = (app) => {
+  return (req, res) => {
+    let authService = new AuthService();
+    authService.check(accessToken).then((validity) => {
+      res.status(HttpStatus.OK).send({
+        valid: validity
+      });
+    }).catch((err) => {
+      if(error instanceof ServiceError) {
+        error.writeResponse(res);
+      } else {
+        new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
+      }
+    });
   }
 }
 
 /* Public */
 exports.authorise = authorise;
 exports.token = token;
+exports.isTokenValid = isTokenValid;

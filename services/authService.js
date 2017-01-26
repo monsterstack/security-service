@@ -1,9 +1,11 @@
 'use strict';
 const Promise = require('promise');
 const HttpStatus = require('http-status');
-const Error = require('core-server').Error;
+const ServiceError = require('core-server').ServiceError;
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
+
+const model = require('security-model').model;
 
 // Dependent Services - TYPES
 const TENANT_SERVICE_TYPE = 'TenantService';
@@ -11,6 +13,7 @@ const TENANT_SERVICE_TYPE = 'TenantService';
 class AuthService {
   constructor(proxy) {
     this.proxy = proxy;
+    this.model = model;
   }
 
   authorise(authRequest) {
@@ -26,7 +29,11 @@ class AuthService {
          */
         self._lookupTenant(clientId, clientSecret).then((tenant) => {
           if(tenant) {
+            console.log('Got Tenant');
+            console.log(`Client Secret - ${tenant.apiSecret}`);
+            console.log(tenant);
             if(tenant.apiSecret === clientSecret) {
+              console.log('Secrets match');
               /**
                * Store Token
                */
@@ -41,10 +48,10 @@ class AuthService {
                  })
                });
              } else {
-               reject(new Error(HttpStatus.FORBIDDEN, "Forbidden Access"));
+               reject(new ServiceError(HttpStatus.FORBIDDEN, "Forbidden Access - Unknown Secret"));
              }
            } else {
-             reject(new Error(HttpStatus.UNAUTHORIZED, "Unauthorized Access"));
+             reject(new ServiceError(HttpStatus.UNAUTHORIZED, "Unauthorized Access"));
            }
         }).catch((err) => {
           reject(err);
@@ -80,8 +87,17 @@ class AuthService {
   }
 
   _storeAuthToken(authRequest) {
+    console.log('Storing Auth Token');
+    let self = this;
     let p = new Promise((resolve, reject) => {
-      resolve(jwt.sign(authRequest, authRequest.clientSecret));
+      let accessToken =jwt.sign(authRequest, "shhhhhh!");
+      console.log(accessToken);
+
+      self.model.saveAccessToken({
+        access_token: accessToken
+      }).then((token) => {
+        resolve(token.access_token);
+      });
     });
 
     return p;
@@ -89,17 +105,16 @@ class AuthService {
 
   _lookupTenant(clientId, clientSecret) {
     let self = this;
-    let unavailError = new Error(HttpStatus.SERVICE_UNAVAILABLE, 'Tenant Service Not Available');
+    let unavailError = new ServiceError(HttpStatus.SERVICE_UNAVAILABLE, 'Tenant Service Not Available');
     let p = new Promise((resolve, reject) => {
       // Use Proxy to talk to Tenant Service.
       if(self.proxy) {
         self.proxy.apiForServiceType(TENANT_SERVICE_TYPE).then((service) => {
           if(service) {
             // Call Tenant Service
-            service.api.tenants.getTenant({id: clientId}, (tenant) => {
-              resolve(tenant);
+            service.api.tenants.getTenantByApiKey({apiKey: clientId}, (tenant) => {
+              resolve(tenant.obj);
             }, (err) => {
-              console.log(err);
               reject(err);
             });
           } else {

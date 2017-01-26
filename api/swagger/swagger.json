@@ -69,6 +69,13 @@
             "schema": {
               "$ref": "#/definitions/AuthorizationResponse"
             }
+          },
+          "401": {
+            "description": "Error",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           }
         }
       }
@@ -96,6 +103,49 @@
             "schema": {
               "$ref": "#/definitions/TokenResponse"
             }
+          },
+          "404": {
+            "description": "Error",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/security/oauth/token/_check": {
+      "get": {
+        "description": "Check Token Validity",
+        "operationId": "check",
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "access-token",
+            "description": "accessToken",
+            "in": "header",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TokenValidity",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/AccessTokenValidity"
+            }
+          },
+          "404": {
+            "description": "Error",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           }
         }
       }
@@ -119,19 +169,51 @@
         "cpuPercentUsage",
         "totalMemPercentageUsage",
         "loadAvg"
-      ]
+      ],
+      "properties": {
+        "cpuPercentUsage": {
+          "type": "number"
+        },
+        "totalMemPercentageUsage": {
+          "type": "number"
+        },
+        "loadAvg": {
+          "type": "number"
+        }
+      }
+    },
+    "AccessTokenValidity": {
+      "type": "object",
+      "required": [
+        "valid"
+      ],
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        }
+      }
     },
     "AuthorizationResponse": {
       "type": "object",
       "required": [
         "redirect_uri"
-      ]
+      ],
+      "properties": {
+        "redirect_uri": {
+          "type": "string"
+        }
+      }
     },
     "TokenResponse": {
       "type": "object",
       "required": [
         "access_token"
-      ]
+      ],
+      "properties": {
+        "access_token": {
+          "type": "string"
+        }
+      }
     }
   },
   "responses": {},
