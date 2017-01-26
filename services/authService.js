@@ -115,7 +115,7 @@ class AuthService {
             service.api.tenants.getTenantByApiKey({apiKey: clientId}, (tenant) => {
               resolve(tenant.obj);
             }, (err) => {
-              reject(err);
+              reject(err.errObj);
             });
           } else {
             console.log('No service found');
