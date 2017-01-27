@@ -9,6 +9,8 @@ module.exports = (app) => {
    *  get:
    *    description: Request Authorization
    *    operationId: authorise
+   *    tags:
+   *      - oauth
    *    produces:
    *      - application/json
    *    parameters:
@@ -48,6 +50,8 @@ module.exports = (app) => {
    *  get:
    *    description: Request Token
    *    operationId: token
+   *    tags:
+   *      - token
    *    produces:
    *      - application/json
    *    parameters:

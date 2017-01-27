@@ -33,6 +33,9 @@
       "get": {
         "description": "Request Authorization",
         "operationId": "authorise",
+        "tags": [
+          "oauth"
+        ],
         "produces": [
           "application/json"
         ],
@@ -84,6 +87,9 @@
       "get": {
         "description": "Request Token",
         "operationId": "token",
+        "tags": [
+          "token"
+        ],
         "produces": [
           "application/json"
         ],
