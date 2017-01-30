@@ -39,12 +39,17 @@ describe('security-api-binding', () => {
 
     apiBinding.bind().then((service) => {
       console.log(`Checking Api...`);
-      assert(service.api !== null, "Binding didn't fail");
-      assert(service.api.health !== null, "Health Endpoints Exist");
-
-      assert(service.api.oauth !== null, "Oauth Endpoints Exist");
-      assert(service.api.token !== null, "Token Endpoints Exist");
-      done();
+      if(service.api === undefined) {
+        done(new Error("Api is null"));
+      } else if(service.api.health === undefined) {
+        done(new Error("Health Api is null"));
+      } else if(service.api.oauth === undefined) {
+        done(new Error("Oauth Api is null"));
+      } else if(service.api.token === undefined) {
+        done(new Error("Token api is null"));
+      } else {
+        done();
+      }
     }).catch((err) => {
       assert(err === undefined, "Error didn't occur");
       done();
