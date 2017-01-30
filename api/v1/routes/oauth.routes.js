@@ -46,37 +46,7 @@ module.exports = (app) => {
 
   /**
    * @swagger
-   * /security/oauth/token:
-   *  get:
-   *    description: Request Token
-   *    operationId: token
-   *    tags:
-   *      - tokens
-   *    produces:
-   *      - application/json
-   *    parameters:
-   *      - name: tokenHashAccessCode
-   *        description: Token Hash Access Code
-   *        in: path
-   *        type: string
-   *        required: true
-   *    responses:
-   *      200:
-   *        description: TokenResponse
-   *        type: object
-   *        schema:
-   *          $ref: '#/definitions/TokenResponse'
-   *      404:
-   *        description: Error
-   *        type: object
-   *        schema:
-   *          $ref: '#/definitions/Error'
-   */
-  app.get('/api/v1/security/token/:tokenHashAccessCode', controller.token(app));
-
-  /**
-   * @swagger
-   * /security/oauth/token/_check:
+   * /security/tokens/_check:
    *  get:
    *    description: Check Token Validity
    *    operationId: check
@@ -103,5 +73,35 @@ module.exports = (app) => {
    *        schema:
    *          $ref: '#/definitions/Error'
    */
-  app.get('/api/v1/security/token/_check', controller.isTokenValid(app));
+  app.get('/api/v1/security/tokens/_check', controller.isTokenValid(app));
+
+  /**
+   * @swagger
+   * /security/tokens:
+   *  get:
+   *    description: Request Token
+   *    operationId: token
+   *    tags:
+   *      - tokens
+   *    produces:
+   *      - application/json
+   *    parameters:
+   *      - name: tokenHashAccessCode
+   *        description: Token Hash Access Code
+   *        in: path
+   *        type: string
+   *        required: true
+   *    responses:
+   *      200:
+   *        description: TokenResponse
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/TokenResponse'
+   *      404:
+   *        description: Error
+   *        type: object
+   *        schema:
+   *          $ref: '#/definitions/Error'
+   */
+  app.get('/api/v1/security/tokens/:tokenHashAccessCode', controller.token(app));
 }

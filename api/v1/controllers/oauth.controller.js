@@ -9,6 +9,8 @@ const AuthService = require(appRoot+'/services/authService.js');
 const CLIENT_ID_HDR = 'x_client_id';
 const CLIENT_SECRET_HDR = 'x_client_secret';
 
+const SEED = "shhhhhhhh!";
+
 const authorise = (app) => {
   return (req, res) => {
     let url = require('url');
@@ -63,6 +65,7 @@ const token = (app) => {
 const isTokenValid = (app) => {
   return (req, res) => {
     let authService = new AuthService();
+    let accessToken = req.headers['access-token'];
     authService.check(accessToken).then((validity) => {
       res.status(HttpStatus.OK).send({
         valid: validity

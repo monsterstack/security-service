@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 
 const model = require('security-model').model;
-
+const SEED = "shhhhhh!";
 // Dependent Services - TYPES
 const TENANT_SERVICE_TYPE = 'TenantService';
 
@@ -61,6 +61,21 @@ class AuthService {
     return p;
   }
 
+  check(accessToken) {
+    let p = new Promise((resolve, reject) => {
+      model.findAccessToken(accessToken).then((tokenModel) => {
+        if(tokenModel) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      }).catch((err) => {
+        reject(err);
+      });
+    });
+    return p;
+  }
+
   token(tokenHashAccessCode) {
     let p = new Promise((resolve, reject) => {
       let access_token = jwt.sign(tokenHashAccessCode, SEED);
@@ -90,7 +105,7 @@ class AuthService {
     console.log('Storing Auth Token');
     let self = this;
     let p = new Promise((resolve, reject) => {
-      let accessToken =jwt.sign(authRequest, "shhhhhh!");
+      let accessToken =jwt.sign(authRequest, SEED);
       console.log(accessToken);
 
       self.model.saveAccessToken({

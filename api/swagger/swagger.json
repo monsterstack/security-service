@@ -84,44 +84,7 @@
         }
       }
     },
-    "/security/oauth/token": {
-      "get": {
-        "description": "Request Token",
-        "operationId": "token",
-        "tags": [
-          "tokens"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "tokenHashAccessCode",
-            "description": "Token Hash Access Code",
-            "in": "path",
-            "type": "string",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TokenResponse",
-            "type": "object",
-            "schema": {
-              "$ref": "#/definitions/TokenResponse"
-            }
-          },
-          "404": {
-            "description": "Error",
-            "type": "object",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/security/oauth/token/_check": {
+    "/security/tokens/_check": {
       "get": {
         "description": "Check Token Validity",
         "operationId": "check",
@@ -148,6 +111,43 @@
             "type": "object",
             "schema": {
               "$ref": "#/definitions/AccessTokenValidity"
+            }
+          },
+          "404": {
+            "description": "Error",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/security/tokens": {
+      "get": {
+        "description": "Request Token",
+        "operationId": "token",
+        "tags": [
+          "tokens"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tokenHashAccessCode",
+            "description": "Token Hash Access Code",
+            "in": "path",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TokenResponse",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
             }
           },
           "404": {
