@@ -127,7 +127,7 @@ class AuthService {
         self.proxy.apiForServiceType(TENANT_SERVICE_TYPE).then((service) => {
           if(service) {
             // Call Tenant Service
-            service.api.tenants.getTenantByApiKey({apiKey: clientId}, (tenant) => {
+            service.api.tenants.getTenantByApiKey({apiKey: clientId, 'x-fast-pass': true}, (tenant) => {
               resolve(tenant.obj);
             }, (err) => {
               reject(err.errObj);
