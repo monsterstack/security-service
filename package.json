@@ -4,7 +4,7 @@
   "description": "Security Service",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha ./tests/*-test.js --reporter mocha-better-spec-reporter"
   },
   "author": "",
   "license": "ISC",
@@ -48,5 +48,8 @@
     "socket.io-redis": "^2.0.1",
     "socketio-auth": "^0.1.0",
     "winston": "^2.3.0"
+  },
+  "devDependencies": {
+    "mocha-better-spec-reporter": "^3.1.0"
   }
 }

@@ -51,7 +51,7 @@ module.exports = (app) => {
    *    description: Request Token
    *    operationId: token
    *    tags:
-   *      - token
+   *      - tokens
    *    produces:
    *      - application/json
    *    parameters:
@@ -80,6 +80,8 @@ module.exports = (app) => {
    *  get:
    *    description: Check Token Validity
    *    operationId: check
+   *    tags:
+   *      - tokens
    *    produces:
    *      - application/json
    *    consumes:

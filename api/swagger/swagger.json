@@ -9,6 +9,7 @@
     "/health": {
       "get": {
         "description": "Get Health of Service",
+        "operationId": "getHealth",
         "tags": [
           "health"
         ],
@@ -88,7 +89,7 @@
         "description": "Request Token",
         "operationId": "token",
         "tags": [
-          "token"
+          "tokens"
         ],
         "produces": [
           "application/json"
@@ -124,6 +125,9 @@
       "get": {
         "description": "Check Token Validity",
         "operationId": "check",
+        "tags": [
+          "tokens"
+        ],
         "produces": [
           "application/json"
         ],
