@@ -55,8 +55,12 @@ const main = () => {
       console.log('Up and running..');
       if(announce === true) {
         server.announce();
+      } else {
+        server.query();
       }
     });
+  }).catch((err) => {
+    console.log(err);
   });
 
   process.on('message', function(msg, socket) {
