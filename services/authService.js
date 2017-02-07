@@ -63,10 +63,13 @@ class AuthService {
 
   check(accessToken) {
     let p = new Promise((resolve, reject) => {
+      console.log(`Checking token ${accessToken}`);
       model.findAccessToken(accessToken).then((tokenModel) => {
+        console.log(tokenModel);
         if(tokenModel) {
           resolve(true);
         } else {
+          console.stash(`No matching token ${accessToken}`);
           resolve(false);
         }
       }).catch((err) => {
