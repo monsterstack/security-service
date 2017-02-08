@@ -41,7 +41,7 @@ class AuthService {
                 /**
                  * Build Auth Response
                  */
-                 self._buildAuthResponse(signedRequest, authRequest).then((response) => {
+                 self._buildAuthResponse(signedRequest.access_token, signedRequest).then((response) => {
                    resolve(response);
                  }).catch((err) => {
                    reject(err);
@@ -80,22 +80,32 @@ class AuthService {
   }
 
   token(tokenHashAccessCode) {
-    let p = new Promise((resolve, reject) => {
-      let access_token = jwt.sign(tokenHashAccessCode, SEED);
+    return this._lookupTokenByHash(tokenHashAccessCode);
+  }
 
-      resolve({
-        access_token: access_token
+  _lookupTokenByHash(hash) {
+    let self = this;
+    let p = new Promise((resolve, reject) => {
+      self.model.findAccessTokenByHash(hash).then((accessToken) => {
+        resolve(accessToken);
+      }).catch((err) => {
+        reject(err);
       });
     });
-
     return p;
   }
 
   _buildAuthResponse(signedRequest, authRequest) {
     let p = new Promise((resolve, reject) => {
-      let sha = sha1(signedRequest);
+      let sha = authRequest.hash;
+      let ip = require('ip').address();
+
+      // Need to get DNS of LB - for now whatevs
+      if(process.env.HOST_IP) {
+        ip = process.env.HOST_IP;
+      }
       let response = {
-        redirect_uri: `http://localhost/api/v1/security/token/#${sha}`
+        redirect_uri: `http://${ip}:${config.port}/api/v1/security/token/#${sha}`
       };
 
       resolve(response);
@@ -112,9 +122,10 @@ class AuthService {
       console.log(accessToken);
 
       self.model.saveAccessToken({
-        access_token: accessToken
+        access_token: accessToken,
+        hash: sha1(accessToken)
       }).then((token) => {
-        resolve(token.access_token);
+        resolve(token);
       });
     });
 
