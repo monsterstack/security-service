@@ -6,9 +6,14 @@ const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 
 const model = require('security-model').model;
-const SEED = "shhhhhh!";
+const SECRET = "shhhhhh!";
 // Dependent Services - TYPES
 const TENANT_SERVICE_TYPE = 'TenantService';
+
+// Expire Token in 10h
+const JWT_OPTS = {
+  expiresIn: "10h"
+};
 
 class AuthService {
   constructor(proxy) {
@@ -67,7 +72,14 @@ class AuthService {
       model.findAccessToken(accessToken).then((tokenModel) => {
         console.log(tokenModel);
         if(tokenModel) {
-          resolve(true);
+          jwt.verify(tokenModel.access_token, SECRET, (err, decoded) => {
+            if(err) {
+              // @TODO: if err.name === 'TokenExpiredError' then delete token.
+              resolve(false);
+            } else {
+              resolve(true);
+            }
+          });
         } else {
           console.stash(`No matching token ${accessToken}`);
           resolve(false);
@@ -118,7 +130,7 @@ class AuthService {
     console.log('Storing Auth Token');
     let self = this;
     let p = new Promise((resolve, reject) => {
-      let accessToken =jwt.sign(authRequest, SEED);
+      let accessToken =jwt.sign(authRequest, SECRET, JWT_OPTS);
       console.log(accessToken);
 
       self.model.saveAccessToken({
