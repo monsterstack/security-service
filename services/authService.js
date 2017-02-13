@@ -42,7 +42,7 @@ class AuthService {
               /**
                * Store Token
                */
-               self._storeAuthToken(authRequest).then((signedRequest) => {
+               self._storeAuthToken(tenant.name, authRequest).then((signedRequest) => {
                 /**
                  * Build Auth Response
                  */
@@ -75,14 +75,14 @@ class AuthService {
           jwt.verify(tokenModel.access_token, SECRET, (err, decoded) => {
             if(err) {
               // @TODO: if err.name === 'TokenExpiredError' then delete token.
-              resolve(false);
+              resolve({ valid: false, tenantName: tokenModel.tenantName});
             } else {
-              resolve(true);
+              resolve({ valid: true, tenantName: tokenModel.tenantName});
             }
           });
         } else {
           console.stash(`No matching token ${accessToken}`);
-          resolve(false);
+          resolve({ valid: false, tenantName: null});
         }
       }).catch((err) => {
         reject(err);
@@ -116,6 +116,7 @@ class AuthService {
       if(process.env.HOST_IP) {
         ip = process.env.HOST_IP;
       }
+
       let response = {
         redirect_uri: `http://${ip}:${config.port}/api/v1/security/token/#${sha}`
       };
@@ -126,16 +127,19 @@ class AuthService {
     return p;
   }
 
-  _storeAuthToken(authRequest) {
+  _storeAuthToken(tenantName, authRequest) {
     console.log('Storing Auth Token');
     let self = this;
     let p = new Promise((resolve, reject) => {
+      let scope = authRequest.scope;
       let accessToken =jwt.sign(authRequest, SECRET, JWT_OPTS);
       console.log(accessToken);
 
       self.model.saveAccessToken({
         access_token: accessToken,
-        hash: sha1(accessToken)
+        hash: sha1(accessToken),
+        scope: scope,
+        tenantName: tenantName
       }).then((token) => {
         resolve(token);
       });

@@ -36,9 +36,12 @@
  *      type: object
  *      required:
  *        - valid
+ *        - tenantName
  *      properties:
  *        valid:
  *          type: boolean
+ *        tenantName:
+ *          type: string
  *   AuthorizationResponse:
  *      type: object
  *      required:
