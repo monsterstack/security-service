@@ -82,38 +82,6 @@ describe('Token Test', () => {
         });
     });
 
-    it('Authorization Token Fetch - Missing Parameters', (done) => {
-        let service = {
-            endpoint: 'http://localhost:12616',
-            schemaRoute: '/swagger.json'
-        };
-
-        let apiBinding = new ApiBinding(service);
-
-        apiBinding.bind().then((service) => {
-            if(service) {
-
-                service.api.tokens.token({    
-                }, (response) => {
-                    console.log(response);
-                    if(response.status === 200) {
-                        done(new Error(`Expected 400 response status and received 200`));
-                    }
-                }, (err) => {
-                    if(err.status === 400) {
-                        done();
-                    } else {
-                        console.log(err);
-                        done(new Error(`Expected 400 response status and received ${err.status}`));
-                    }
-                });
-            } else {
-                done(new Error("Missing Security Service"));
-            }
-        
-        });
-    });
-
     after((done) => {
         done();
     });

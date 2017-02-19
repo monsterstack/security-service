@@ -112,37 +112,6 @@ describe('Authorize Test', () => {
         });
     });
 
-    it('Authorization Fails - Bad Request', (done) => {
-        let service = {
-            endpoint: 'http://localhost:12616',
-            schemaRoute: '/swagger.json'
-        };
-
-        let apiBinding = new ApiBinding(service);
-
-        apiBinding.bind().then((service) => {
-            if(service) {
-                service.api.oauth.authorise({ 
-                    scope: ['all'], 
-                    grant_type: 'grant', 
-                    'x-client-secret': clientSecret
-                }, (response) => {
-                    done();
-                }, (err) => {
-                    if(err.status === HttpStatus.BAD_REQUEST) {
-                        done();
-                    } else {
-                        done(new Error(`Expecting status 400, received ${err.status}`));
-                    }
-                });
-            } else {
-                done(new Error("Missiong Security Service"));
-            }
-        
-        });
-    });
-
-
     after((done) => {
         done();
     });
