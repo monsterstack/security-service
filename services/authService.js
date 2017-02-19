@@ -4,6 +4,7 @@ const HttpStatus = require('http-status');
 const ServiceError = require('core-server').ServiceError;
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
+const config = require('config');
 
 const model = require('security-model').model;
 const SECRET = "shhhhhh!";
@@ -99,6 +100,7 @@ class AuthService {
     let self = this;
     let p = new Promise((resolve, reject) => {
       self.model.findAccessTokenByHash(hash).then((accessToken) => {
+        console.log(`Got accessToken ${accessToken}`);
         resolve(accessToken);
       }).catch((err) => {
         reject(err);

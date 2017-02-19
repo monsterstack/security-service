@@ -52,9 +52,22 @@ const token = (app) => {
     let tokenHashAccessCode = req.params.tokenHashAccessCode;
     let authService = new AuthService();
     authService.token(tokenHashAccessCode).then((token) => {
-      res.status(HttpStatus.OK).send(token);
+      if(token) {
+        res.status(HttpStatus.OK).send(token);
+      } else {
+        new ServiceError(HttpStatus.NOT_FOUND, "Token Not Found").writeResponse(res);
+      }
     }).catch((err) => {
-      new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
+      console.log(err);
+      if(err.status) {
+        if(err instanceof ServiceError) {
+          err.writeResponse(res);
+        } else {
+          new ServiceError(err.status, err.message).writeResponse(res);
+        }
+      } else {
+        new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
+      }
     });
 
   }

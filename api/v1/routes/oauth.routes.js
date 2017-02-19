@@ -77,7 +77,7 @@ module.exports = (app) => {
 
   /**
    * @swagger
-   * /security/tokens:
+   * /security/tokens/{tokenHashAccessCode}:
    *  get:
    *    description: Request Token
    *    operationId: token
