@@ -31,36 +31,23 @@ class AuthService {
         let grant = authRequest.grant;
 
         /**
-         * Lookup Tenant
+         * Lookup Tenant > Store Auth Token > Build Auth Response
          */
-        self._lookupTenant(clientId, clientSecret).then((tenant) => {
-          if(tenant) {
-            console.log('Got Tenant');
-            console.log(`Client Secret - ${tenant.apiSecret}`);
-            console.log(tenant);
-            if(tenant.apiSecret === clientSecret) {
-              console.log('Secrets match');
-              /**
-               * Store Token
-               */
-               self._storeAuthToken(tenant.name, authRequest).then((signedRequest) => {
-                /**
-                 * Build Auth Response
-                 */
-                 self._buildAuthResponse(signedRequest.access_token, signedRequest).then((response) => {
-                   resolve(response);
-                 }).catch((err) => {
-                   reject(err);
-                 })
-               });
-             } else {
-               reject(new ServiceError(HttpStatus.FORBIDDEN, "Forbidden Access - Unknown Secret"));
-             }
-           } else {
-             reject(new ServiceError(HttpStatus.UNAUTHORIZED, "Unauthorized Access"));
-           }
-        }).catch((err) => {
-          reject(err);
+        self._lookupTenant(clientId, clientSecret)
+          .then((tenant) => {
+            return self._storeAuthToken(tenant.name, authRequest);
+          })
+          .then((signedRequest) => {
+            return self._buildAuthResponse(signedRequest, authRequest);
+          })
+          .then((authResponse) => {
+            resolve(authResponse);
+          }).catch((err) => {
+            console.log(err);
+            if(err.status === HttpStatus.NOT_FOUND) {
+              err.status = HttpStatus.UNAUTHORIZED;
+            }
+            reject(err);
         });
     });
 
@@ -144,6 +131,8 @@ class AuthService {
         tenantName: tenantName
       }).then((token) => {
         resolve(token);
+      }).catch((err) => {
+        reject(err);
       });
     });
 
@@ -160,9 +149,12 @@ class AuthService {
           if(service) {
             // Call Tenant Service
             service.api.tenants.getTenantByApiKey({apiKey: clientId, 'x-fast-pass': true}, (tenant) => {
+              console.log('Got tenant');
+              console.log(tenant.obj);
               resolve(tenant.obj);
             }, (err) => {
-              reject(err.errObj);
+              console.log(err.obj);
+              reject(err);
             });
           } else {
             console.log('No service found');

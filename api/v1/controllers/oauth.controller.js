@@ -36,6 +36,8 @@ const authorise = (app) => {
       if(err.status) {
         if(err instanceof ServiceError) {
           // Can we do duck typing?? Maybe check instance???
+          console.log('Sending Service Error');
+          console.log(err.writeResponse);
           err.writeResponse(res);
         } else {
           new ServiceError(err.status, err.message).writeResponse(res);
