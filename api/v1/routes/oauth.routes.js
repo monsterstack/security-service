@@ -42,7 +42,7 @@ module.exports = (app) => {
    *        schema:
    *          $ref: '#/definitions/Error'
    */
-  app.get('/api/v1/security/oauth', controller.authorise(app));
+  app.get('/api/v1/security/oauth', app.realizationCheck.dependenciesAreRealized(), controller.authorise(app));
 
   /**
    * @swagger
@@ -73,7 +73,7 @@ module.exports = (app) => {
    *        schema:
    *          $ref: '#/definitions/Error'
    */
-  app.get('/api/v1/security/tokens/_check', controller.isTokenValid(app));
+  app.get('/api/v1/security/tokens/_check', app.realizationCheck.dependenciesAreRealized(), controller.isTokenValid(app));
 
   /**
    * @swagger
@@ -103,5 +103,5 @@ module.exports = (app) => {
    *        schema:
    *          $ref: '#/definitions/Error'
    */
-  app.get('/api/v1/security/tokens/:tokenHashAccessCode', controller.token(app));
+  app.get('/api/v1/security/tokens/:tokenHashAccessCode', app.realizationCheck.dependenciesAreRealized(), controller.token(app));
 }

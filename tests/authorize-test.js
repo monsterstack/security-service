@@ -4,17 +4,54 @@ const ApiBinding = require('discovery-proxy').ApiBinding;
 const assert = require('assert');
 
 const securityServiceFactory = require('./serviceFactory').securityServiceFactory;
+const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
+
 
 describe('Authorize Test', () => {
     let clientId = 'af6965b0-f69c-11e6-bccd-a3216a71ea6d';
-    let clientSecret = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoIjoibWFnaWMiLCJhZ2VudCI6IngtY2RzcC10ZW5hbnQiLCJleHAiOjE0ODgxMTExNDksImlhdCI6MTQ4NzUwNjM0OX0.ls51XjQ6KNRJETq2-l_6fFvBJ4ztwABXFQWDSCfRbs0';
+    let clientSecret = 'yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoIjoibWFnaWMiLCJhZ2VudCI6IngtY2RzcC10ZW5hb\
+                nQiLCJleHAiOjE0ODgxMTExNDksImlhdCI6MTQ4NzUwNjM0OX0.ls51XjQ6KNRJETq2-l_6fFvBJ4ztwABXFQWDSCfRbs0';
+
+    let tenantEntry = {
+        "status" : "Active",
+	    "apiSecret" : clientSecret,
+        "timestamp" : Date.now(),
+	    "name" : "YoMama",
+	    "apiKey" : "af6965b0-f69c-11e6-bccd-a3216a71e46d",
+	    "services" : [{
+			"name" : "DiscoveryService",
+			"_id" : ObjectID("58a98bad624702214a6e2ba9")
+		}]
+    };
 
     before( (done) => {
-        // Need some way to mock Tenant Service - fully swaggered
-        // And then sideload the service descriptor into 'server.boundProxy'.
-        securityServiceFactory((err, server) => {
-            done();
+        // Need to add a Tenant
+        // Connection URL
+        let url = 'mongodb://localhost:27017/cdspTenant';
+        // Use connect method to connect to the Server
+        MongoClient.connect(url, function(err, db) {
+            assert.equal(null, err);
+            if(db) {
+                console.log("Connected correctly to server");
+                let collection = db.collection('tenants');
+                // Insert some documents
+                collection.insertMany([tenantEntry], (err, result) => {
+
+                    // Need some way to mock Tenant Service - fully swaggered
+                    // And then sideload the service descriptor into 'server.boundProxy'.
+                    securityServiceFactory((err, server) => {
+                        done();
+                    });
+
+                    db.close();
+                });
+            } else {
+                done(new Error('Failed to connect to db'));
+            }
         });
+
+        
     });
 
     it('Authorization Succeeds', (done) => {
