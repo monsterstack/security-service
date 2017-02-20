@@ -1,7 +1,7 @@
 'use strict';
 const ApiBinding = require('discovery-proxy').ApiBinding;
 const assert = require('assert');
-const securityServiceFactory = require('./serviceFactory').securityServiceFactory;
+const securityServiceFactory = require('./resources/serviceFactory').securityServiceFactory;
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 const model = require('security-model').model;

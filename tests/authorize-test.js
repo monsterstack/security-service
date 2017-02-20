@@ -6,11 +6,11 @@ const ApiBinding = require('discovery-proxy').ApiBinding;
 const Proxy = require('discovery-proxy').Proxy;
 const assert = require('assert');
 const uuid = require('node-uuid');
-const securityServiceFactory = require('./serviceFactory').securityServiceFactory;
+const securityServiceFactory = require('./resources/serviceFactory').securityServiceFactory;
 const jwt = require('jsonwebtoken');
 
 const TENANT_PORT = 8717;
-const TENANT_SWAGGER = require('./tenant-swagger.json');
+const TENANT_SWAGGER = require('./resources/tenant-swagger.json');
 
 /**
  *  Add Tenant for Test Cases.
