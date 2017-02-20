@@ -1,9 +1,9 @@
 'use strict';
 const Server = require('core-server').Server;
 
-const securityServiceFactory = (callback) => {
+const securityServiceFactory = (name, callback) => {
     let server = null;
-    server = new Server("SecurityService", null, {types:[]}, {});
+    server = new Server(name, null, {types:[]}, {});
 
     server.init().then(() => {
         server.loadHttpRoutes();

@@ -28,7 +28,7 @@ describe('Token Test', () => {
             scope: ['all']
         }).then((access) => {
             console.log('shoved access_token into db');
-            securityServiceFactory((err, server) => {
+            securityServiceFactory('SecurityService', (err, server) => {
                 done();
             });
         }).catch((err) => {

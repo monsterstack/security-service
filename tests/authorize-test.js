@@ -34,7 +34,7 @@ const addTenant = (tenantUrl, tenant) => {
  */
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
-        securityServiceFactory((err, server) => {
+        securityServiceFactory('SecurityService', (err, server) => {
             resolve(server);
         });
     });
@@ -170,6 +170,11 @@ describe('Authorize Test', () => {
         });
     });
 
+    /**
+     * This test attempts to Authorize given a prepared Tenant (apikey/secret)
+     * The expectation is that the Tenant will be located and the auth request key/secret will
+     * match that of the Tenant.
+     */
     it('Authorization Succeeds', (done) => {
         let service = {
             endpoint: 'http://localhost:12616',
@@ -198,7 +203,9 @@ describe('Authorize Test', () => {
     }).timeout(5000);
 
     /**
-     * Forbidden shall occur when the 'x-client-secret' is invalid
+     * This test attempts to Authorize given a prepared Tenant (apikey/secret)
+     * The expectation is that the Tenant will be located but the auth request secret will
+     * not match that of the Tenant. This should result in a 403.
      */
     it('Authorization Fails - Forbidden', (done) => {
         let service = {
@@ -232,7 +239,9 @@ describe('Authorize Test', () => {
     }).timeout(5000);
 
     /**
-     * Unauthorized shall occur when the 'x-client-id' is not recognized. (i.e. we haven't authenticated you)
+     * This test attempts to Authorize given a prepared Tenant (apikey/secret)
+     * The expectation is that the Tenant will be located but the auth request key will
+     * not match any Tenant in the system.  This should result in a 401.
      */
     it('Authorization Fails - Unauthorized', (done) => {
         let service = {
