@@ -1,57 +1,173 @@
 'use strict';
+const Promise = require('promise');
+const mongoose = require('mongoose');
 const HttpStatus = require('http-status');
 const ApiBinding = require('discovery-proxy').ApiBinding;
+const Proxy = require('discovery-proxy').Proxy;
 const assert = require('assert');
-
+const uuid = require('node-uuid');
 const securityServiceFactory = require('./serviceFactory').securityServiceFactory;
-const MongoClient = require('mongodb').MongoClient;
-const ObjectID = require('mongodb').ObjectID;
+const jwt = require('jsonwebtoken');
 
+const TENANT_PORT = 8717;
+const TENANT_SWAGGER = require('./tenant-swagger.json');
+
+/**
+ *  Add Tenant for Test Cases.
+ */
+const addTenant = (tenantUrl, tenant) => {
+    let p = new Promise((resolve, reject) => {
+        let url = tenantUrl;
+        // get the connection
+        let conn = mongoose.createConnection(url);
+        conn.collection('tenants').insertMany([tenant], (err, result) => {
+            console.log(result);
+            resolve(result.ops[0]);
+        });
+    });
+
+    return p;
+};
+
+/**
+ * Start Security Service
+ */
+const startSecurityService = () => {
+    let p = new Promise((resolve, reject) => {
+        securityServiceFactory((err, server) => {
+            resolve(server);
+        });
+    });
+    return p;
+}
+
+/**
+ * Mock Tenant Service
+ */
+const mockTenantService = (simpleTenantEntry) => {
+    console.log('Tenant Swagger');
+    let swagger = TENANT_SWAGGER;
+    swagger.host = `127.0.0.1:${TENANT_PORT}`;
+    swagger.basePath = '/api/v1';
+    swagger.schemes = ['http'];
+    
+    console.log(swagger);
+    
+    let p = new Promise((resolve, reject) => {
+        let app = require('express')();
+        app.get('/swagger.json', (req, res) => {        
+            res.status(HttpStatus.OK).send(swagger);
+        });
+
+        /* Used by Authorization -- need to mock endpoint */
+        app.get('/api/v1/tenants/_apiKey/:apiKey', (req, res) => {
+            console.log('Inside Tenant Lookup');
+            res.status(HttpStatus.OK).send(simpleTenantEntry);
+        });
+
+
+        app.listen(TENANT_PORT, '127.0.0.1');
+
+        resolve(app);
+        
+    });
+    return p;
+}
+
+/**
+ * Side Load Tenant Descriptor into Bound Proxy.
+ */
+const sideLoadTenantDescriptor = (service, tenantDescriptor) => {
+    let p = new Promise((resolve, reject) => {
+        tenantDescriptor.id = uuid.v1();
+        if(service.boundProxy) {
+            service.getApp().proxy = service.boundProxy;
+
+            service.boundProxy.sideLoadService(tenantDescriptor).then(() => {
+                return service.boundProxy.table();
+            }).then((cache) => {
+                console.log(cache);
+                resolve(); 
+            }).catch((err) => {
+                reject(err);
+            });
+        } else {
+            service.boundProxy = new Proxy();
+            service.getApp().proxy = service.boundProxy;
+            service.boundProxy.sideLoadService(tenantDescriptor).then(() => {
+                return service.boundProxy.table();
+            }).then((cache) => {
+                console.log(cache);
+                resolve(); 
+            }).catch((err) => {
+                reject(err);
+            });
+        }
+    });
+    return p;
+}
 
 describe('Authorize Test', () => {
-    let clientId = 'af6965b0-f69c-11e6-bccd-a3216a71ea6d';
-    let clientSecret = 'yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoIjoibWFnaWMiLCJhZ2VudCI6IngtY2RzcC10ZW5hb\
-                nQiLCJleHAiOjE0ODgxMTExNDksImlhdCI6MTQ4NzUwNjM0OX0.ls51XjQ6KNRJETq2-l_6fFvBJ4ztwABXFQWDSCfRbs0';
+    let tenantUrl = 'mongodb://localhost:27017/cdspTenant';
+    let securityUrl = 'mongodb://localhost:27017/cdspSecurity';
+
+    let clearTenantDB  = require('mocha-mongoose')(tenantUrl, {noClear: true})
+    let clearSecurityDB = require('mocha-mongoose')(securityUrl, {noClear: true});
+    let securityService = null;
+    let mockTenantServer = null;
+
+    let clientId = uuid.v1();
+    let clientSecret = jwt.sign(clientId, 'shhhhh!');
 
     let tenantEntry = {
         "status" : "Active",
 	    "apiSecret" : clientSecret,
         "timestamp" : Date.now(),
-	    "name" : "YoMama",
-	    "apiKey" : "af6965b0-f69c-11e6-bccd-a3216a71e46d",
+	    "name" : "Testerson",
+	    "apiKey" : clientId,
 	    "services" : [{
 			"name" : "DiscoveryService",
-			"_id" : ObjectID("58a98bad624702214a6e2ba9")
+			"_id" : mongoose.Types.ObjectId("58a98bad624702214a6e2ba9")
 		}]
     };
 
+    let tenantDescriptor = {
+        "docsPath": 'http://cloudfront.mydocs.com/tenant', 
+        "endpoint": `http://localhost:${TENANT_PORT}`,
+        "healthCheckRoute":  "/health" ,
+        "region":  "us-east-1" ,
+        "schemaRoute":  "/swagger.json" ,
+        "stage":  "dev" ,
+        "status":  "Online" ,
+        "timestamp": Date.now(),
+        "type":  "TenantService" ,
+        "version":  "v1"
+    };
+
     before( (done) => {
-        // Need to add a Tenant
-        // Connection URL
-        let url = 'mongodb://localhost:27017/cdspTenant';
-        // Use connect method to connect to the Server
-        MongoClient.connect(url, function(err, db) {
-            assert.equal(null, err);
-            if(db) {
-                console.log("Connected correctly to server");
-                let collection = db.collection('tenants');
-                // Insert some documents
-                collection.insertMany([tenantEntry], (err, result) => {
+        startSecurityService().then((server) => {
+            securityService = server;
+            return addTenant(tenantUrl, tenantEntry);
+        }).then((tenant) => {
+            return mockTenantService(tenantEntry);
+        }).then((mock) => {
+            mockTenantServer = mock;
+            setTimeout(() => {
+                securityService.getApp().dependencies = { types: ['TenantService'] };
+                console.log(securityService.getApp().dependencies);
 
-                    // Need some way to mock Tenant Service - fully swaggered
-                    // And then sideload the service descriptor into 'server.boundProxy'.
-                    securityServiceFactory((err, server) => {
-                        done();
-                    });
-
-                    db.close();
-                });
-            } else {
-                done(new Error('Failed to connect to db'));
-            }
+                sideLoadTenantDescriptor(securityService, tenantDescriptor).then(() => {
+                    console.log(securityService.getApp().dependencies);
+                    console.log(securityService.getApp().proxy);
+                    done();
+                }).catch((err) => {
+                    done(err);
+                })
+            }, 1500);
+            //done();
+        }).catch((err) => {
+            done(err);
         });
-
-        
     });
 
     it('Authorization Succeeds', (done) => {
@@ -79,7 +195,7 @@ describe('Authorize Test', () => {
             }
         
         });
-    });
+    }).timeout(5000);
 
     /**
      * Forbidden shall occur when the 'x-client-secret' is invalid
@@ -113,7 +229,7 @@ describe('Authorize Test', () => {
             }
         
         });
-    });
+    }).timeout(5000);
 
     /**
      * Unauthorized shall occur when the 'x-client-id' is not recognized. (i.e. we haven't authenticated you)
@@ -147,9 +263,19 @@ describe('Authorize Test', () => {
             }
         
         });
-    });
+    }).timeout(5000);
 
     after((done) => {
-        done();
+        // I hate christmas
+        clearTenantDB((err) => {
+            if(err) done(err);
+            else {
+                clearSecurityDB((err) => {
+                    if(err) done(err);
+                    else
+                        done();
+                });
+            }
+        });
     });
 });

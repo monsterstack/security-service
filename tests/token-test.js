@@ -7,6 +7,10 @@ const sha1 = require('sha1');
 const model = require('security-model').model;
 
 describe('Token Test', () => {
+    let securityUrl = 'mongodb://localhost:27017/cdspSecurity';
+
+    let clearSecurityDB = require('mocha-mongoose')(securityUrl, {noClear: true});
+
     let hash;
     let securityDescriptor = {
         endpoint: 'http://localhost:12616',
@@ -92,6 +96,10 @@ describe('Token Test', () => {
     });
 
     after((done) => {
-        done();
+        clearSecurityDB((err) => {
+            if(err) done(err);
+            else
+                done();
+        })
     });
 });

@@ -97,6 +97,7 @@ class AuthService {
   }
 
   _buildAuthResponse(signedRequest, authRequest) {
+    console.log('Buiding Auth Response');
     let p = new Promise((resolve, reject) => {
       let sha = authRequest.hash;
       let ip = require('ip').address();
@@ -117,19 +118,22 @@ class AuthService {
   }
 
   _storeAuthToken(tenantName, authRequest) {
-    console.log('Storing Auth Token');
+    console.log(`Storing Auth Token for ${tenantName}`);
     let self = this;
     let p = new Promise((resolve, reject) => {
       let scope = authRequest.scope;
       let accessToken =jwt.sign(authRequest, SECRET, JWT_OPTS);
-      console.log(accessToken);
-
-      self.model.saveAccessToken({
+      let hash = sha1(accessToken);
+      let accessTokenModel = {
         access_token: accessToken,
-        hash: sha1(accessToken),
+        hash: hash,
         scope: scope,
         tenantName: tenantName
-      }).then((token) => {
+      };
+      console.log(`Attempt save of Access Token`);
+      console.log(accessTokenModel);
+      self.model.saveAccessToken(accessTokenModel).then((token) => {
+        console.log('Saved Token');
         resolve(token);
       }).catch((err) => {
         reject(err);

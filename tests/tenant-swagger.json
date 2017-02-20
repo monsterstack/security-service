@@ -1,0 +1,117 @@
+{
+  "info": {
+    "title": "Tenant Service",
+    "description": "This service is responsible for segmenting service configuration between distinct client applications",
+    "version": "1.0.0"
+  },
+  "swagger": "2.0",
+  "paths": {
+    "/tenants/_apiKey/{apiKey}": {
+      "get": {
+        "summary": "Get Tenant By Api Key",
+        "description": "Get Tenant By Api Key",
+        "operationId": "getTenantByApiKey",
+        "tags": [
+          "tenants"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "apiKey",
+            "description": "Api Key of Tenant",
+            "type": "string",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "x-fast-pass",
+            "description": "Bypass Auth",
+            "type": "boolean",
+            "in": "header",
+            "require": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Tenant"
+            }
+          },
+          "404": {
+            "description": "Error",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Error": {
+      "type": "object",
+      "required": [
+        "errorMessage"
+      ],
+      "properties": {
+        "errorMessage": {
+          "type": "string"
+        }
+      }
+    },
+    "Tenant": {
+      "type": "object",
+      "required": [
+        "name",
+        "timestamp",
+        "status",
+        "apiKey",
+        "apiSecret"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "apiKey": {
+          "type": "string"
+        },
+        "apiSecret": {
+          "type": "string"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServiceName"
+          }
+        },
+        "timestamp": {
+          "type": "number",
+          "format": "date"
+        }
+      }
+    }
+  },
+  "responses": {},
+  "parameters": {},
+  "securityDefinitions": {},
+  "tags": [
+    {
+      "name": "tenants",
+      "description": "Everything you need to know about Tenants"
+    }
+  ]
+}
