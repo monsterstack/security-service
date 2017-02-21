@@ -243,6 +243,7 @@ describe('Authorize Test', () => {
     }).timeout(5000);
 
     after((done) => {
+        securityService.getHttp().close();
         // I hate christmas
         clearTenantDB((err) => {
             if(err) done(err);

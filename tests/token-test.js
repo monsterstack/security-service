@@ -17,7 +17,7 @@ const startSecurityService = () => {
 
 describe('Token Test', () => {
     let securityUrl = 'mongodb://localhost:27017/cdspSecurity';
-
+    let securityService = null;
     let clearSecurityDB = require('mocha-mongoose')(securityUrl, {noClear: true});
 
     let hash;
@@ -38,6 +38,7 @@ describe('Token Test', () => {
         }).then((access) => {
             console.log('shoved access_token into db');
             startSecurityService().then((server) => {
+                securityService = server;
                 done();
             }).catch((err) => {
                 done(err);
@@ -107,6 +108,7 @@ describe('Token Test', () => {
     });
 
     after((done) => {
+        securityService.getHttp().close();    
         clearSecurityDB((err) => {
             if(err) done(err);
             else
