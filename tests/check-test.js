@@ -5,6 +5,9 @@ const startTestService = require('discovery-test-tools').startTestService;
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 const model = require('security-model').model;
+const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadServiceDescriptor;
+
+const TENANT_PORT = 8717;
 
 const SECRET = "shhhhhh!";
 
@@ -29,6 +32,19 @@ describe('Check Token Test', () => {
     let securityUrl = 'mongodb://localhost:27017/cdspSecurity';
     let securityService = null;
     let clearSecurityDB = require('mocha-mongoose')(securityUrl, {noClear: true});
+
+    let tenantDescriptor = {
+        "docsPath": 'http://cloudfront.mydocs.com/tenant', 
+        "endpoint": `http://localhost:${TENANT_PORT}`,
+        "healthCheckRoute":  "/health" ,
+        "region":  "us-east-1" ,
+        "schemaRoute":  "/swagger.json" ,
+        "stage":  "dev" ,
+        "status":  "Online" ,
+        "timestamp": Date.now(),
+        "type":  "TenantService" ,
+        "version":  "v1"
+    };
 
     let token;
     let securityDescriptor = {
@@ -56,13 +72,21 @@ describe('Check Token Test', () => {
             tenantName: "Fubu",
             scope: ['all']
         }).then((access) => {
-            console.log('shoved access_token into db');
-            startSecurityService().then((server) => {
-                securityService = server;
-                done();
-            }).catch((err) => {
-                done(err);
-            });
+           return startSecurityService();
+        }).then((server) => {
+            securityService = server;
+            setTimeout(() => {
+                securityService.getApp().dependencies = { types: ['TenantService'] };
+                console.log(securityService.getApp().dependencies);
+
+                sideLoadTenantDescriptor(securityService, tenantDescriptor).then(() => {
+                    console.log(securityService.getApp().dependencies);
+                    console.log(securityService.getApp().proxy);
+                    done();
+                }).catch((err) => {
+                    done(err);
+                });
+            }, 1500);
         }).catch((err) => {
             done(err);
         });
