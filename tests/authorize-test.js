@@ -6,7 +6,8 @@ const ApiBinding = require('discovery-proxy').ApiBinding;
 const Proxy = require('discovery-proxy').Proxy;
 const assert = require('assert');
 const uuid = require('node-uuid');
-const securityServiceFactory = require('./resources/serviceFactory').securityServiceFactory;
+const startTestService = require('discovery-test-tools').startTestService;
+const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadServiceDescriptor;
 const jwt = require('jsonwebtoken');
 
 const TENANT_PORT = 8717;
@@ -34,7 +35,7 @@ const addTenant = (tenantUrl, tenant) => {
  */
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
-        securityServiceFactory('SecurityService', (err, server) => {
+        startTestService('SecurityService', (err, server) => {
             resolve(server);
         });
     });
@@ -70,39 +71,6 @@ const mockTenantService = (simpleTenantEntry) => {
 
         resolve(app);
         
-    });
-    return p;
-}
-
-/**
- * Side Load Tenant Descriptor into Bound Proxy.
- */
-const sideLoadTenantDescriptor = (service, tenantDescriptor) => {
-    let p = new Promise((resolve, reject) => {
-        tenantDescriptor.id = uuid.v1();
-        if(service.boundProxy) {
-            service.getApp().proxy = service.boundProxy;
-
-            service.boundProxy.sideLoadService(tenantDescriptor).then(() => {
-                return service.boundProxy.table();
-            }).then((cache) => {
-                console.log(cache);
-                resolve(); 
-            }).catch((err) => {
-                reject(err);
-            });
-        } else {
-            service.boundProxy = new Proxy();
-            service.getApp().proxy = service.boundProxy;
-            service.boundProxy.sideLoadService(tenantDescriptor).then(() => {
-                return service.boundProxy.table();
-            }).then((cache) => {
-                console.log(cache);
-                resolve(); 
-            }).catch((err) => {
-                reject(err);
-            });
-        }
     });
     return p;
 }

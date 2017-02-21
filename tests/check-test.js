@@ -1,12 +1,21 @@
 'use strict';
 const ApiBinding = require('discovery-proxy').ApiBinding;
 const assert = require('assert');
-const securityServiceFactory = require('./resources/serviceFactory').securityServiceFactory;
+const startTestService = require('discovery-test-tools').startTestService;
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 const model = require('security-model').model;
 
 const SECRET = "shhhhhh!";
+
+const startSecurityService = () => {
+    let p = new Promise((resolve, reject) => {
+        startTestService('SecurityService', (err, server) => {
+            resolve(server);
+        });
+    });
+    return p;
+};
 
 describe('Check Token Test', () => {
     /**
@@ -48,8 +57,10 @@ describe('Check Token Test', () => {
             scope: ['all']
         }).then((access) => {
             console.log('shoved access_token into db');
-            securityServiceFactory("SecurityService", (err, server) => {
+            startSecurityService().then((server) => {
                 done();
+            }).catch((err) => {
+                done(err);
             });
         }).catch((err) => {
             done(err);
