@@ -10,7 +10,7 @@ const SECRET = "shhhhhh!";
 
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
-        startTestService('SecurityService', (err, server) => {
+        startTestService('SecurityService', {} /* options */, (err, server) => {
             resolve(server);
         });
     });

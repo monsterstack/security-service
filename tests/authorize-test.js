@@ -13,6 +13,7 @@ const jwt = require('jsonwebtoken');
 const TENANT_PORT = 8717;
 const TENANT_SWAGGER = require('./resources/tenant-swagger.json');
 
+
 /**
  *  Add Tenant for Test Cases.
  */
@@ -35,7 +36,7 @@ const addTenant = (tenantUrl, tenant) => {
  */
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
-        startTestService('SecurityService', (err, server) => {
+        startTestService('SecurityService', {}/* options */, (err, server) => {
             resolve(server);
         });
     });

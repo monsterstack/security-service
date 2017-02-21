@@ -8,7 +8,7 @@ const model = require('security-model').model;
 
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
-        startTestService('SecurityService', (err, server) => {
+        startTestService('SecurityService', {} /* options */, (err, server) => {
             resolve(server);
         });
     });
