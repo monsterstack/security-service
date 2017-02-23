@@ -7,7 +7,7 @@ const sha1 = require('sha1');
 const model = require('security-model').model;
 const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadServiceDescriptor;
 
-const TENANT_PORT = 8717;
+const TENANT_PORT = 8718;
 
 const SECRET = "shhhhhh!";
 
