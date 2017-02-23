@@ -4,7 +4,7 @@
   "description": "Security Service",
   "main": "server.js",
   "scripts": {
-    "test": "mocha ./tests/*-test.js --reporter mocha-better-spec-reporter"
+    "test": "cd ./tests && mocha ./*-test.js --reporter nyan"
   },
   "author": "",
   "license": "ISC",
