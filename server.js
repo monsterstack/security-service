@@ -60,6 +60,11 @@ const main = () => {
   server.init().then(() => {
     let app = server.getApp();
 
+    setTimeout(() => {
+      console.log(app);
+      console.log(`App Listening Port ${server.getApp().listeningPort}`);
+    }, 1000);
+
     // Set View Engine and Static Paths
     app.set('view engine', 'ejs');
     app.use('/portal', express.static(path.join(__dirname + '/portal')));

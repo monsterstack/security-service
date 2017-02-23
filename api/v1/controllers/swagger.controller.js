@@ -7,7 +7,13 @@ const SwaggerService = require('core-server').SwaggerService;
 const getSwagger = (app) => {
   return (req, res) => {
     let baseSwagger = require(appRoot + '/api/swagger/swagger.json');
-    let swaggerService = new SwaggerService('/api/v1', baseSwagger);
+    let options = {};
+    console.log(`App listening port is ${app.listeningPort}`);
+    if(!process.env.hasOwnProperty('randomWorkerPort') || process.env.randomWorkerPort === false) {
+      options.port = app.listeningPort;
+    }
+
+    let swaggerService = new SwaggerService('/api/v1', baseSwagger, options);
     swaggerService.getSwagger().then((swagger) => {
       res.status(HttpStatus.OK).send(swagger);
     }).catch((err) => {

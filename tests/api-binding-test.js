@@ -37,9 +37,9 @@ describe('security-api-binding', () => {
    * accurately described the operations / tags supported by the SecurityService.
    */
   it('api created when binding occurs', (done) => {
-
+    console.log(`App listening on port ${server.getApp().listeningPort}`);
     let service = {
-      endpoint: 'http://localhost:12616',
+      endpoint: `http://localhost:${server.getApp().listeningPort}`,
       schemaRoute: '/swagger.json'
     };
     console.log("Creating Binding");

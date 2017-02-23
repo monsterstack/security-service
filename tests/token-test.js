@@ -7,7 +7,7 @@ const sha1 = require('sha1');
 const model = require('security-model').model;
 const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadServiceDescriptor;
 
-const TENANT_PORT = 8717;
+const TENANT_PORT = 8719;
 
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
@@ -37,10 +37,6 @@ describe('Token Test', () => {
     };
 
     let hash;
-    let securityDescriptor = {
-        endpoint: 'http://localhost:12616',
-        schemaRoute: '/swagger.json'
-    }
 
     before( (done) => {
         // Need to shove access_token into db.
@@ -75,7 +71,12 @@ describe('Token Test', () => {
 
 
     it('Authorization Token Fetch Succeeds', (done) => {
+        let securityDescriptor = {
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
+            schemaRoute: '/swagger.json'
+        };
         let apiBinding = new ApiBinding(securityDescriptor);
+
 
         apiBinding.bind().then((service) => {
             if(service) {
@@ -105,7 +106,10 @@ describe('Token Test', () => {
 
     it('Authorization Token Fetch Fails', (done) => {
         let hash = "dfadadsfd";
-        
+        let securityDescriptor = {
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
+            schemaRoute: '/swagger.json'
+        };
         let apiBinding = new ApiBinding(securityDescriptor);
 
         apiBinding.bind().then((service) => {

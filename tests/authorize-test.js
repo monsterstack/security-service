@@ -146,7 +146,7 @@ describe('Authorize Test', () => {
      */
     it('Authorization Succeeds', (done) => {
         let service = {
-            endpoint: 'http://localhost:12616',
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
             schemaRoute: '/swagger.json'
         };
 
@@ -178,7 +178,7 @@ describe('Authorize Test', () => {
      */
     it('Authorization Fails - Forbidden', (done) => {
         let service = {
-            endpoint: 'http://localhost:12616',
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
             schemaRoute: '/swagger.json'
         };
 
@@ -214,7 +214,7 @@ describe('Authorize Test', () => {
      */
     it('Authorization Fails - Unauthorized', (done) => {
         let service = {
-            endpoint: 'http://localhost:12616',
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
             schemaRoute: '/swagger.json'
         };
 

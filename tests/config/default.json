@@ -1,5 +1,5 @@
 {
-  "port": 12616,
+  "port": 0,
   "discovery": {
     "host": "cdsp.digitalfunk.io",
     "port": 7616

@@ -47,10 +47,6 @@ describe('Check Token Test', () => {
     };
 
     let token;
-    let securityDescriptor = {
-        endpoint: 'http://localhost:12616',
-        schemaRoute: '/swagger.json'
-    }
 
     let clientId = '11111';
     let clientSecret = 'dfdfadffd';
@@ -94,7 +90,10 @@ describe('Check Token Test', () => {
 
 
     it('Authorization Validity Check Succeeds', (done) => {
-
+        let securityDescriptor = {
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
+            schemaRoute: '/swagger.json'
+        }
         let apiBinding = new ApiBinding(securityDescriptor);
         
 
@@ -124,7 +123,10 @@ describe('Check Token Test', () => {
     });
 
     it('Authorization Validity Check Fails', (done) => {
-
+        let securityDescriptor = {
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
+            schemaRoute: '/swagger.json'
+        }
         let apiBinding = new ApiBinding(securityDescriptor);
         
 
