@@ -1,22 +1,29 @@
 version: '3'
+
 services:
   web:
-    build: .
+    image: securityservice_web
     ports:
       - "12616:12616"
+    networks:
+      - back-tier
     volumes:
-      - .:/code
+      - /code
     environment:
       - HOST_IP=${HOST_IP}
       - REDIS_HOST_IP=${REDIS_HOST_IP}
-      - MONGO_HOST_IP=${MONGO_HOST_IP}
       - ETCD_HOST_IP=${ETCD_HOST_IP}
+      - MONGO_HOST_IP=${MONGO_HOST_IP}
       - SERVICE_NAME=SecurityService
       - STAGE=${STAGE}
       - CONFIG_HOST=${CONFIG_HOST}
       - CONFIG_PORT=${CONFIG_PORT}
+      - INTERLOCK_DATA={"hostname":"security", "domain":"digitalfunk.io"}
     extra_hosts:
       - "cdsp.digitalfunk.io:${HOST_IP}"
-      - "etcd.digitalfunk.io:${ETCD_HOST_IP}"
       - "mongo.digitalfunk.io:${MONGO_HOST_IP}"
-      - "redis.digitalfunk.io:${REDIS_HOST_IP}"   
+      - "etcd.digitalfunk.io:${ETCD_HOST_IP}"
+      - "redis.digitalfunk.io:${REDIS_HOST_IP}"
+networks:
+    back-tier:
+        external: true
