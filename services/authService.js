@@ -43,11 +43,14 @@ class AuthService {
           .then((authResponse) => {
             resolve(authResponse);
           }).catch((err) => {
-            console.log(err);
             if(err.status === HttpStatus.NOT_FOUND) {
-              err.status = HttpStatus.UNAUTHORIZED;
+              console.log('Tenant Not Found');
+              console.log(err);
+              let serviceError = new ServiceError(HttpStatus.UNAUTHORIZED, err.obj.errorMessage);
+              reject(serviceError);
+            } else {
+              reject(err);
             }
-            reject(err);
         });
     });
 

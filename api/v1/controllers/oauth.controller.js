@@ -40,10 +40,10 @@ const authorise = (app) => {
           console.log(err.writeResponse);
           err.writeResponse(res);
         } else {
-          new ServiceError(err.status, err.message).writeResponse(res);
+          new ServiceError(err.status, err.message || err.errorMessage).writeResponse(res);
         }
       } else {
-        new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message).writeResponse(res);
+        new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message || err.errorMessage).writeResponse(res);
       }
     });
   }
