@@ -80,7 +80,7 @@ describe('Authorize Test', () => {
     let tenantUrl = 'mongodb://localhost:27017/cdspTenant';
     let securityUrl = 'mongodb://localhost:27017/cdspSecurity';
 
-    let clearTenantDB  = require('mocha-mongoose')(tenantUrl, {noClear: true})
+    let clearTenantDB  = require('mocha-mongoose')(tenantUrl, {noClear: true});
     let clearSecurityDB = require('mocha-mongoose')(securityUrl, {noClear: true});
     let securityService = null;
     let mockTenantServer = null;
@@ -167,87 +167,87 @@ describe('Authorize Test', () => {
                     done(new Error(err.errObj.errorMessage));
                 });
             } else {
+                done(new Error('Missing Security Service'));
+            }
+        
+        });
+    }).timeout(5000);
+
+    /**
+     * This test attempts to Authorize given a prepared Tenant (apikey/secret)
+     * The expectation is that the Tenant will be located but the auth request secret will
+     * not match that of the Tenant. This should result in a 403.
+     */
+    it('Authorization Fails - Forbidden', (done) => {
+        let service = {
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
+            schemaRoute: '/swagger.json'
+        };
+
+        let apiBinding = new ApiBinding(service);
+
+        apiBinding.bind().then((service) => {
+            if(service) {
+                service.api.oauth.authorise({ 
+                    scope: ['all'], 
+                    grant_type: 'grant', 
+                    'x-client-id': clientId, 
+                    'x-client-secret': 'foo'
+                }, (response) => {
+                    done();
+                }, (err) => {
+                    if(err.status === HttpStatus.FORBIDDEN) {
+                        done();
+                    } else {
+                        done(new Error(`Expecting status 403, received ${err.status}`));
+                    }
+                });
+            } else {
                 done(new Error("Missing Security Service"));
             }
         
         });
-    }).timeout(120000);
+    }).timeout(5000);
 
-    // /**
-    //  * This test attempts to Authorize given a prepared Tenant (apikey/secret)
-    //  * The expectation is that the Tenant will be located but the auth request secret will
-    //  * not match that of the Tenant. This should result in a 403.
-    //  */
-    // it('Authorization Fails - Forbidden', (done) => {
-    //     let service = {
-    //         endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
-    //         schemaRoute: '/swagger.json'
-    //     };
+    /**
+     * This test attempts to Authorize given a prepared Tenant (apikey/secret)
+     * The expectation is that the Tenant will be located but the auth request key will
+     * not match any Tenant in the system.  This should result in a 401.
+     */
+    it('Authorization Fails - Unauthorized', (done) => {
+        let service = {
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
+            schemaRoute: '/swagger.json'
+        };
 
-    //     let apiBinding = new ApiBinding(service);
+        let apiBinding = new ApiBinding(service);
 
-    //     apiBinding.bind().then((service) => {
-    //         if(service) {
-    //             service.api.oauth.authorise({ 
-    //                 scope: ['all'], 
-    //                 grant_type: 'grant', 
-    //                 'x-client-id': clientId, 
-    //                 'x-client-secret': 'foo'
-    //             }, (response) => {
-    //                 done();
-    //             }, (err) => {
-    //                 if(err.status === HttpStatus.FORBIDDEN) {
-    //                     done();
-    //                 } else {
-    //                     done(new Error(`Expecting status 403, received ${err.status}`));
-    //                 }
-    //             });
-    //         } else {
-    //             done(new Error("Missing Security Service"));
-    //         }
+        apiBinding.bind().then((service) => {
+            if(service) {
+                service.api.oauth.authorise({ 
+                    scope: ['all'], 
+                    grant_type: 'grant', 
+                    'x-client-id': 'foo', 
+                    'x-client-secret': clientSecret
+                }, (response) => {
+                    done();
+                }, (err) => {
+                    if(err.status === HttpStatus.UNAUTHORIZED) {
+                        done();
+                    } else {
+                        done(new Error(`Expecting status 401, received ${err.status}`));
+                    }
+                });
+            } else {
+                done(new Error("Missing Security Service"));
+            }
         
-    //     });
-    // }).timeout(5000);
-
-    // /**
-    //  * This test attempts to Authorize given a prepared Tenant (apikey/secret)
-    //  * The expectation is that the Tenant will be located but the auth request key will
-    //  * not match any Tenant in the system.  This should result in a 401.
-    //  */
-    // it('Authorization Fails - Unauthorized', (done) => {
-    //     let service = {
-    //         endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
-    //         schemaRoute: '/swagger.json'
-    //     };
-
-    //     let apiBinding = new ApiBinding(service);
-
-    //     apiBinding.bind().then((service) => {
-    //         if(service) {
-    //             service.api.oauth.authorise({ 
-    //                 scope: ['all'], 
-    //                 grant_type: 'grant', 
-    //                 'x-client-id': 'foo', 
-    //                 'x-client-secret': clientSecret
-    //             }, (response) => {
-    //                 done();
-    //             }, (err) => {
-    //                 if(err.status === HttpStatus.UNAUTHORIZED) {
-    //                     done();
-    //                 } else {
-    //                     done(new Error(`Expecting status 401, received ${err.status}`));
-    //                 }
-    //             });
-    //         } else {
-    //             done(new Error("Missing Security Service"));
-    //         }
-        
-    //     });
-    // }).timeout(5000);
+        });
+    }).timeout(5000);
 
     after((done) => {
         securityService.getHttp().close();
-        // I hate christmas
+        // I hate christmas trees
         clearTenantDB((err) => {
             if(err) done(err);
             else {
