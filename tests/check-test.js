@@ -9,18 +9,18 @@ const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadService
 
 const TENANT_PORT = 8718;
 
-const SECRET = "shhhhhh!";
+const SECRET = 'shhhhhh!';
 
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
-        startTestService('SecurityService', {} /* options */, (err, server) => {
+        startTestService('SecurityService', {}, (err, server) => {
             resolve(server);
-        });
-    });
+          });
+      });
     return p;
-};
+  };
 
-describe('Check Token Test', () => {
+describe('check-token', () => {
     /**
      * Setup all Test Fixtures
      * Security Url
@@ -31,44 +31,44 @@ describe('Check Token Test', () => {
      */
     let securityUrl = 'mongodb://localhost:27017/cdspSecurity';
     let securityService = null;
-    let clearSecurityDB = require('mocha-mongoose')(securityUrl, {noClear: true});
+    let clearSecurityDB = require('mocha-mongoose')(securityUrl, { noClear: true });
 
     let tenantDescriptor = {
-        "docsPath": 'http://cloudfront.mydocs.com/tenant', 
-        "endpoint": `http://localhost:${TENANT_PORT}`,
-        "healthCheckRoute":  "/health" ,
-        "region":  "us-east-1" ,
-        "schemaRoute":  "/swagger.json" ,
-        "stage":  "dev" ,
-        "status":  "Online" ,
-        "timestamp": Date.now(),
-        "type":  "TenantService" ,
-        "version":  "v1"
-    };
+        docsPath: 'http://cloudfront.mydocs.com/tenant',
+        endpoint: `http://localhost:${TENANT_PORT}`,
+        healthCheckRoute:  '/health',
+        region:  'us-east-1',
+        schemaRoute:  '/swagger.json',
+        stage:  'dev',
+        status:  'Online',
+        timestamp: Date.now(),
+        type:  'TenantService',
+        version:  'v1',
+      };
 
     let token;
 
     let clientId = '11111';
     let clientSecret = 'dfdfadffd';
 
-    let authReq = { 
-        scope: ['all'], 
-        grant_type: 'grant', 
-        'x-client-id': clientId, 
-        'x-client-secret': clientSecret
-    };
+    let authReq = {
+        scope: ['all'],
+        grant_type: 'grant',
+        'x-client-id': clientId,
+        'x-client-secret': clientSecret,
+      };
 
-    before( (done) => {
+    before((done) => {
         // Need to shove access_token into db.
         token = jwt.sign(JSON.stringify(authReq), SECRET);
         let hash = sha1(token);
         model.saveAccessToken({
             access_token: token,
             hash: hash,
-            tenantName: "Fubu",
-            scope: ['all']
-        }).then((access) => {
-           return startSecurityService();
+            tenantName: 'Fubu',
+            scope: ['all'],
+          }).then((access) => {
+          return startSecurityService();
         }).then((server) => {
             securityService = server;
             setTimeout(() => {
@@ -79,89 +79,84 @@ describe('Check Token Test', () => {
                     console.log(securityService.getApp().dependencies);
                     console.log(securityService.getApp().proxy);
                     done();
-                }).catch((err) => {
+                  }).catch((err) => {
                     done(err);
-                });
-            }, 1500);
-        }).catch((err) => {
+                  });
+              }, 1500);
+          }).catch((err) => {
             done(err);
-        });
-    });
+          });
+      });
 
-
-    it('Authorization Validity Check Succeeds', (done) => {
+    it('auth validity check succeeds', (done) => {
         let securityDescriptor = {
             endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
-            schemaRoute: '/swagger.json'
-        }
+            schemaRoute: '/swagger.json',
+          };
         let apiBinding = new ApiBinding(securityDescriptor);
-        
 
         apiBinding.bind().then((service) => {
-            if(service) {
-                service.api.tokens.check({ 
-                    'access-token': token
+            if (service) {
+              service.api.tokens.check({
+                  'access-token': token,
                 }, (response) => {
-                    console.log(response.obj);
-                    if(response.status != 200) {
-                        done(new Error(`Expected Response Status 200 - got ${response.status}`));
-                    } else if(response.obj.valid !== true) {
-                        done(new Error(`Expected Response token validity ${response.obj.valid} \
-                             to be equal to  true`));
-                    } else {
-                        done();
-                    }
+                  console.log(response.obj);
+                  if (response.status != 200) {
+                    done(new Error(`Expected Response Status 200 - got ${response.status}`));
+                  } else if (response.obj.valid !== true) {
+                    done(new Error(`Expected Response token validity ${response.obj.valid} to be equal to  true`));
+                  } else {
+                    done();
+                  }
                 }, (err) => {
-                    console.log(err);
-                    done(err);
+                  console.log(err);
+                  done(err);
                 });
             } else {
-                done(new Error("Missing Security Service"));
+              done(new Error('Missing Security Service'));
             }
-        
-        });
-    });
 
-    it('Authorization Validity Check Fails', (done) => {
+          });
+      });
+
+    it('auth validity check fails', (done) => {
         let securityDescriptor = {
             endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
-            schemaRoute: '/swagger.json'
-        }
+            schemaRoute: '/swagger.json',
+          };
         let apiBinding = new ApiBinding(securityDescriptor);
-        
 
         apiBinding.bind().then((service) => {
-            if(service) {
-                service.api.tokens.check({ 
-                    'access-token': token.substring(0, 10)
+            if (service) {
+              service.api.tokens.check({
+                  'access-token': token.substring(0, 10),
                 }, (response) => {
-                    console.log(response.obj);
-                    if(response.status != 200) {
-                        done(new Error(`Expected Response Status 200 - got ${response.status}`));
-                    } else if(response.obj.valid !== false) {
-                        done(new Error(`Expected Response token validity ${response.obj.valid} \
-                             to be equal to  false`));
-                    } else {
-                        done();
-                    }
+                  console.log(response.obj);
+                  if (response.status != 200) {
+                    done(new Error(`Expected Response Status 200 - got ${response.status}`));
+                  } else if (response.obj.valid !== false) {
+                    done(new Error(`Expected Response token validity ${response.obj.valid} to be equal to  false`));
+                  } else {
+                    done();
+                  }
                 }, (err) => {
-                    console.log(err);
-                    done(err);
+                  console.log(err);
+                  done(err);
                 });
             } else {
-                done(new Error("Missing Security Service"));
+              done(new Error('Missing Security Service'));
             }
-        
-        });
-    });
+
+          });
+      });
 
     after((done) => {
         securityService.getHttp().close();
 
         clearSecurityDB((err) => {
-            if(err) done(err);
+            if (err) done(err);
             else
                 done();
-        })
-    });
-});
+          });
+      });
+  });

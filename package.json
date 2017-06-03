@@ -5,6 +5,9 @@
   "main": "server.js",
   "scripts": {
     "test": "cd ./tests && mocha ./*-test.js --reporter nyan",
+    "generateSwagger": "swagger-jsdoc -d ./api/swagger/info.js ./api/swagger/model-schema.js ./api/v1/routes/*.js && mv swagger.json ./api/swagger/swagger.json",
+    "fixStyle": "jscs --fix api services tests",
+    "checkStyle": "jscs api services tests --reporter unix",
     "docker-build": "docker-compose --host ${DOCKER_REGISTRY_HOST} -f docker-compose.yml -f docker-compose.prod.yml build",
     "docker-deploy": "docker --host ${SWARM_HOST} stack deploy -c ./docker-compose.prod.stack.yml securityservice_web"
   },

@@ -104,4 +104,4 @@ module.exports = (app) => {
    *          $ref: '#/definitions/Error'
    */
   app.get('/api/v1/security/tokens/:tokenHashAccessCode', app.realizationCheck.dependenciesAreRealized(), controller.token(app));
-}
+};
