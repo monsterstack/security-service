@@ -31,6 +31,8 @@ class AuthService {
         let scope = authRequest.scope;
         let grant = authRequest.grant;
 
+        let verified = jwt.verify(clientSecret, clientId);
+
         /**
          * Lookup Tenant > Store Auth Token > Build Auth Response
          */

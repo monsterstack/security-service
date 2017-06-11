@@ -8,6 +8,8 @@ const assert = require('assert');
 const uuid = require('node-uuid');
 const startTestService = require('discovery-test-tools').startTestService;
 const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadServiceDescriptor;
+
+const TokenTestHelper = require('service-test-helpers').TokenTestHelper;
 const jwt = require('jsonwebtoken');
 
 const TENANT_PORT = 8715;
@@ -85,11 +87,9 @@ describe('Authorize Test', () => {
     let mockTenantServer = null;
 
     let clientId = uuid.v1();
-    let clientSecret = jwt.sign(clientId, 'shhhhh!');
 
     let tenantEntry = {
         status: 'Active',
-        apiSecret: clientSecret,
         timestamp: Date.now(),
         name: 'Testerson',
         apiKey: clientId,
@@ -98,6 +98,9 @@ describe('Authorize Test', () => {
           _id: mongoose.Types.ObjectId('58a98bad624702214a6e2ba9'),
         },],
       };
+
+    let clientSecret = new TokenTestHelper().codeSecret(tenantEntry, clientId);
+    tenantEntry.clientSecret = clientSecret;
 
     let tenantDescriptor = {
         docsPath: 'http://cloudfront.mydocs.com/tenant',
