@@ -48,17 +48,13 @@ describe('token-test', () => {
             tenantName: 'Fubu',
             scope: ['all'],
           }).then((access) => {
-            console.log('shoved access_token into db');
             return startSecurityService();
           }).then((server) => {
             securityService = server;
             setTimeout(() => {
                 securityService.getApp().dependencies = { types: ['TenantService'] };
-                console.log(securityService.getApp().dependencies);
 
                 sideLoadTenantDescriptor(securityService, tenantDescriptor).then(() => {
-                    console.log(securityService.getApp().dependencies);
-                    console.log(securityService.getApp().proxy);
                     done();
                   }).catch((err) => {
                     done(err);
@@ -79,7 +75,6 @@ describe('token-test', () => {
         apiBinding.bind().then((service) => {
             if (service) {
               let tokenHashAccessCode = hash;
-              console.log(tokenHashAccessCode);
               service.api.tokens.token({
                   tokenHashAccessCode: tokenHashAccessCode,
                 }, (response) => {
@@ -91,7 +86,6 @@ describe('token-test', () => {
                     done();
                   }
                 }, (err) => {
-                  console.log(err);
                   done(err);
                 });
             } else {

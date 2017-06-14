@@ -36,9 +36,6 @@ const authorise = (app) => {
     }).catch((err) => {
       if (err.status) {
         if (err instanceof ServiceError) {
-          // Can we do duck typing?? Maybe check instance???
-          console.log('Sending Service Error');
-          console.log(err.writeResponse);
           err.writeResponse(res);
         } else {
           new ServiceError(err.status, err.message || err.errorMessage).writeResponse(res);
@@ -61,7 +58,6 @@ const token = (app) => {
         new ServiceError(HttpStatus.NOT_FOUND, 'Token Not Found').writeResponse(res);
       }
     }).catch((err) => {
-      console.log(err);
       if (err.status) {
         if (err instanceof ServiceError) {
           err.writeResponse(res);

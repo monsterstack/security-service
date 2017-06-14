@@ -73,11 +73,8 @@ describe('check-token', () => {
             securityService = server;
             setTimeout(() => {
                 securityService.getApp().dependencies = { types: ['TenantService'] };
-                console.log(securityService.getApp().dependencies);
 
                 sideLoadTenantDescriptor(securityService, tenantDescriptor).then(() => {
-                    console.log(securityService.getApp().dependencies);
-                    console.log(securityService.getApp().proxy);
                     done();
                   }).catch((err) => {
                     done(err);
@@ -100,7 +97,6 @@ describe('check-token', () => {
               service.api.tokens.check({
                   'access-token': token,
                 }, (response) => {
-                  console.log(response.obj);
                   if (response.status != 200) {
                     done(new Error(`Expected Response Status 200 - got ${response.status}`));
                   } else if (response.obj.valid !== true) {
@@ -109,7 +105,6 @@ describe('check-token', () => {
                     done();
                   }
                 }, (err) => {
-                  console.log(err);
                   done(err);
                 });
             } else {
@@ -131,7 +126,6 @@ describe('check-token', () => {
               service.api.tokens.check({
                   'access-token': token.substring(0, 10),
                 }, (response) => {
-                  console.log(response.obj);
                   if (response.status != 200) {
                     done(new Error(`Expected Response Status 200 - got ${response.status}`));
                   } else if (response.obj.valid !== false) {
@@ -140,7 +134,6 @@ describe('check-token', () => {
                     done();
                   }
                 }, (err) => {
-                  console.log(err);
                   done(err);
                 });
             } else {

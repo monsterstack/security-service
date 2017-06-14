@@ -2,9 +2,12 @@
 const Promise = require('promise');
 const mongoose = require('mongoose');
 const HttpStatus = require('http-status');
+
+const ServiceTestHelper = require('service-test-helpers').ServiceTestHelper;
+const assert = require('service-test-helpers').Assert;
+
 const ApiBinding = require('discovery-proxy').ApiBinding;
 const Proxy = require('discovery-proxy').Proxy;
-const assert = require('assert');
 const uuid = require('node-uuid');
 const startTestService = require('discovery-test-tools').startTestService;
 const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadServiceDescriptor;
@@ -25,7 +28,6 @@ const addTenant = (tenantUrl, tenant) => {
         // get the connection
         let conn = mongoose.createConnection(url);
         conn.collection('tenants').insertMany([tenant], (err, result) => {
-            console.log(result);
             resolve(result.ops[0]);
           });
       });
@@ -38,7 +40,7 @@ const addTenant = (tenantUrl, tenant) => {
  */
 const startSecurityService = () => {
     let p = new Promise((resolve, reject) => {
-        startTestService('SecurityService', {}/* options */, (err, server) => {
+        startTestService('SecurityService', {}, (err, server) => {
             resolve(server);
           });
       });
@@ -49,13 +51,10 @@ const startSecurityService = () => {
  * Mock Tenant Service
  */
 const mockTenantService = (simpleTenantEntry) => {
-    console.log('Tenant Swagger');
     let swagger = TENANT_SWAGGER;
     swagger.host = `127.0.0.1:${TENANT_PORT}`;
     swagger.basePath = '/api/v1';
     swagger.schemes = ['http'];
-
-    console.log(swagger);
 
     let p = new Promise((resolve, reject) => {
         let app = require('express')();
@@ -65,7 +64,6 @@ const mockTenantService = (simpleTenantEntry) => {
 
         /* Used by Authorization -- need to mock endpoint */
         app.get('/api/v1/tenants/_apiKey/:apiKey', (req, res) => {
-            console.log('Inside Tenant Lookup');
             res.status(HttpStatus.OK).send(simpleTenantEntry);
           });
 
@@ -93,13 +91,10 @@ describe('Authorize Test', () => {
         timestamp: Date.now(),
         name: 'Testerson',
         apiKey: clientId,
-        services: [{
-          name: 'DiscoveryService',
-          _id: mongoose.Types.ObjectId('58a98bad624702214a6e2ba9'),
-        },],
+        services: ['DiscoveryService'],
       };
 
-    let clientSecret = new TokenTestHelper().codeSecret(tenantEntry, clientId);
+    let clientSecret = new TokenTestHelper().codeTenantSecret(tenantEntry, clientId);
     tenantEntry.clientSecret = clientSecret;
 
     let tenantDescriptor = {
@@ -117,7 +112,6 @@ describe('Authorize Test', () => {
 
     before((done) => {
         startSecurityService().then((server) => {
-            console.log(server.getApp().listeningPort);
             securityService = server;
             return addTenant(tenantUrl, tenantEntry);
           }).then((tenant) => {
@@ -126,17 +120,12 @@ describe('Authorize Test', () => {
             mockTenantServer = mock;
             setTimeout(() => {
                 securityService.getApp().dependencies = ['TenantService'];
-                console.log(securityService.getApp().dependencies);
-
                 sideLoadTenantDescriptor(securityService, tenantDescriptor).then(() => {
-                    console.log(securityService.getApp().dependencies);
-                    console.log(securityService.getApp().proxy);
                     done();
                   }).catch((err) => {
                     done(err);
                   });
               }, 1500);
-            //done();
           }).catch((err) => {
             done(err);
           });
@@ -147,7 +136,7 @@ describe('Authorize Test', () => {
      * The expectation is that the Tenant will be located and the auth request key/secret will
      * match that of the Tenant.
      */
-    it('auth succeeds', (done) => {
+    it('auth succeeds - tenant', (done) => {
         let service = {
             endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
             schemaRoute: '/swagger.json',
@@ -165,15 +154,15 @@ describe('Authorize Test', () => {
                 }, (response) => {
                   done();
                 }, (err) => {
-                  console.log(err);
-                  done(new Error(err.errObj.errorMessage));
+                  console.log(err.status);
+                  done(err);
                 });
             } else {
               done(new Error('Missing Security Service'));
             }
 
           });
-      }).timeout(5000);
+      });
 
     /**
      * This test attempts to Authorize given a prepared Tenant (apikey/secret)

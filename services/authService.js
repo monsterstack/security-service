@@ -2,6 +2,8 @@
 const Promise = require('promise');
 const HttpStatus = require('http-status');
 const ServiceError = require('core-server').ServiceError;
+const SecretFactory = require('core-server').ApiSecretFactory;
+
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 const config = require('config');
@@ -21,6 +23,8 @@ class AuthService {
   constructor(proxy) {
     this.proxy = proxy;
     this.model = model;
+
+    this.secretFactory = new SecretFactory();
   }
 
   authorise(authRequest) {
@@ -30,31 +34,48 @@ class AuthService {
         let clientSecret = authRequest.client_secret;
         let scope = authRequest.scope;
         let grant = authRequest.grant;
-
-        let verified = jwt.verify(clientSecret, clientId);
+        _this.secretFactory.verifySecret(clientSecret, clientId).then((verified) => {
+          if (verified.scope === 'Tenant')
+             return _this._lookupTenant(clientId, clientSecret);
+          else if (verified.scope === 'Application')
+             return _this._lookupApplication(clientId, clientSecret);
+          else
+             throw new ServiceError(HttpStatus.FORBIDDEN, 'Invalid Client Secret');
+        }).then((resource) => {
+            return _this._storeAuthToken(resource.name, authRequest);
+          }).then((signedRequest) => {
+          return _this._buildAuthResponse(signedRequest, authRequest);
+        }).then((authResponse) => {
+          resolve(authResponse);
+        }).catch((err) => {
+          if (err.status === HttpStatus.NOT_FOUND) {
+            let serviceError = new ServiceError(HttpStatus.UNAUTHORIZED, err.obj.errorMessage);
+            reject(serviceError);
+          } else {
+            reject(err);
+          }
+        });
 
         /**
          * Lookup Tenant > Store Auth Token > Build Auth Response
          */
-        _this._lookupTenant(clientId, clientSecret)
-          .then((tenant) => {
-            return _this._storeAuthToken(tenant.name, authRequest);
-          })
-          .then((signedRequest) => {
-            return _this._buildAuthResponse(signedRequest, authRequest);
-          })
-          .then((authResponse) => {
-            resolve(authResponse);
-          }).catch((err) => {
-            if (err.status === HttpStatus.NOT_FOUND) {
-              console.log('Tenant Not Found');
-              console.log(err);
-              let serviceError = new ServiceError(HttpStatus.UNAUTHORIZED, err.obj.errorMessage);
-              reject(serviceError);
-            } else {
-              reject(err);
-            }
-          });
+        // _this._lookupTenant(clientId, clientSecret)
+        //   .then((tenant) => {
+        //     return _this._storeAuthToken(tenant.name, authRequest);
+        //   })
+        //   .then((signedRequest) => {
+        //     return _this._buildAuthResponse(signedRequest, authRequest);
+        //   })
+        //   .then((authResponse) => {
+        //     resolve(authResponse);
+        //   }).catch((err) => {
+        //     if (err.status === HttpStatus.NOT_FOUND) {
+        //       let serviceError = new ServiceError(HttpStatus.UNAUTHORIZED, err.obj.errorMessage);
+        //       reject(serviceError);
+        //     } else {
+        //       reject(err);
+        //     }
+        //   });
       });
 
     return p;
@@ -63,7 +84,6 @@ class AuthService {
   check(accessToken) {
     let p = new Promise((resolve, reject) => {
       model.findAccessToken(accessToken).then((tokenModel) => {
-        console.log(tokenModel);
         if (tokenModel) {
           jwt.verify(tokenModel.access_token, SECRET, (err, decoded) => {
             if (err) {
@@ -163,6 +183,33 @@ class AuthService {
         });
       } else {
         // What is the error in this case? -- No Proxy
+        reject(unavailError);
+      }
+    });
+
+    return p;
+  }
+
+  _lookupApplication(clientId, clientSecret) {
+    let _this = this;
+    let unavailError = new ServiceError(HttpStatus.SERVICE_UNAVAILABLE, 'Application Service Not Available');
+    let p = new Promise((resolve, reject) => {
+      if (_this.proxy) {
+        _this.proxy.apiForServiceType(TENANT_SERVICE_TYPE).then((service) => {
+          if (service) {
+            // Call Application Service
+            service.api.applications.getApplicationByApiKey({ apiKey: clientId, 'x-fast-pass': true }, (app) => {
+              resolve(app.obj);
+            }, (err) => {
+              reject(err);
+            });
+          } else {
+            reject(unavailError);
+          }
+        }).catch((err) => {
+          reject(unavailError);
+        });
+      } else {
         reject(unavailError);
       }
     });
