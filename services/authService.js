@@ -55,27 +55,6 @@ class AuthService {
             reject(err);
           }
         });
-
-        /**
-         * Lookup Tenant > Store Auth Token > Build Auth Response
-         */
-        // _this._lookupTenant(clientId, clientSecret)
-        //   .then((tenant) => {
-        //     return _this._storeAuthToken(tenant.name, authRequest);
-        //   })
-        //   .then((signedRequest) => {
-        //     return _this._buildAuthResponse(signedRequest, authRequest);
-        //   })
-        //   .then((authResponse) => {
-        //     resolve(authResponse);
-        //   }).catch((err) => {
-        //     if (err.status === HttpStatus.NOT_FOUND) {
-        //       let serviceError = new ServiceError(HttpStatus.UNAUTHORIZED, err.obj.errorMessage);
-        //       reject(serviceError);
-        //     } else {
-        //       reject(err);
-        //     }
-        //   });
       });
 
     return p;
@@ -87,10 +66,9 @@ class AuthService {
         if (tokenModel) {
           jwt.verify(tokenModel.access_token, SECRET, (err, decoded) => {
             if (err) {
-              // @TODO: if err.name === 'TokenExpiredError' then delete token.
-              resolve({ valid: false, tenantName: tokenModel.tenantName });
+              resolve({ valid: false, tenantName: tokenModel.name });
             } else {
-              resolve({ valid: true, tenantName: tokenModel.tenantName });
+              resolve({ valid: true, tenantName: tokenModel.name });
             }
           });
         } else {
@@ -139,7 +117,7 @@ class AuthService {
     return p;
   }
 
-  _storeAuthToken(tenantName, authRequest) {
+  _storeAuthToken(name, authRequest) {
     let _this = this;
     let p = new Promise((resolve, reject) => {
       let scope = authRequest.scope;
@@ -149,7 +127,7 @@ class AuthService {
         access_token: accessToken,
         hash: hash,
         scope: scope,
-        tenantName: tenantName,
+        name: name,
       };
       _this.model.saveAccessToken(accessTokenModel).then((token) => {
         resolve(token);
@@ -179,10 +157,9 @@ class AuthService {
             reject(unavailError);
           }
         }).catch((err) => {
-          reject(unavailError);
+          reject(err);
         });
       } else {
-        // What is the error in this case? -- No Proxy
         reject(unavailError);
       }
     });
@@ -192,7 +169,7 @@ class AuthService {
 
   _lookupApplication(clientId, clientSecret) {
     let _this = this;
-    let unavailError = new ServiceError(HttpStatus.SERVICE_UNAVAILABLE, 'Application Service Not Available');
+    let unavailError = new ServiceError(HttpStatus.SERVICE_UNAVAILABLE, 'Tenant Service Not Available');
     let p = new Promise((resolve, reject) => {
       if (_this.proxy) {
         _this.proxy.apiForServiceType(TENANT_SERVICE_TYPE).then((service) => {
@@ -207,7 +184,7 @@ class AuthService {
             reject(unavailError);
           }
         }).catch((err) => {
-          reject(unavailError);
+          reject(err);
         });
       } else {
         reject(unavailError);

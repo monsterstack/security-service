@@ -65,7 +65,7 @@ describe('check-token', () => {
         model.saveAccessToken({
             access_token: token,
             hash: hash,
-            tenantName: 'Fubu',
+            name: 'Fubu',
             scope: ['all'],
           }).then((access) => {
           return startSecurityService();

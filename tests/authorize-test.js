@@ -18,6 +18,27 @@ const jwt = require('jsonwebtoken');
 const TENANT_PORT = 8715;
 const TENANT_SWAGGER = require('./resources/tenant-swagger.json');
 
+const verifyApplicationAuthOk = (done) => {
+  return (response) => {
+    assert.assertEquals(response.status, HttpStatus.OK, `Expected status 200 - Ok`);
+    assert.assertFieldExists('redirect_uri', response.obj, 'Expected redirect_uri exists');
+    done();
+  };
+};
+
+const verifyTenantAuthOk = (done) => {
+  return (response) => {
+    assert.assertEquals(response.status, HttpStatus.OK, `Expected status 200 - Ok`);
+    assert.assertFieldExists('redirect_uri', response.obj, 'Expected redirect_uri exists');
+    done();
+  };
+};
+
+const verifyErrorMissing = (done) => {
+  return (err) => {
+    done(err);
+  };
+};
 
 /**
  *  Add Tenant for Test Cases.
@@ -35,6 +56,19 @@ const addTenant = (tenantUrl, tenant) => {
     return p;
   };
 
+const addApplication = (tenantUrl, application) => {
+  let p = new Promise((resolve, reject) => {
+        let url = tenantUrl;
+        // get the connection
+        let conn = mongoose.createConnection(url);
+        conn.collection('applications').insertMany([application], (err, result) => {
+            resolve(result.ops[0]);
+          });
+      });
+
+  return p;
+};
+
 /**
  * Start Security Service
  */
@@ -50,7 +84,7 @@ const startSecurityService = () => {
 /**
  * Mock Tenant Service
  */
-const mockTenantService = (simpleTenantEntry) => {
+const mockTenantService = (simpleTenantEntry, simpleAppEntry) => {
     let swagger = TENANT_SWAGGER;
     swagger.host = `127.0.0.1:${TENANT_PORT}`;
     swagger.basePath = '/api/v1';
@@ -65,6 +99,10 @@ const mockTenantService = (simpleTenantEntry) => {
         /* Used by Authorization -- need to mock endpoint */
         app.get('/api/v1/tenants/_apiKey/:apiKey', (req, res) => {
             res.status(HttpStatus.OK).send(simpleTenantEntry);
+          });
+
+        app.get('/api/v1/apps/_apiKey/:apiKey', (req, res) => {
+            res.status(HttpStatus.OK).send(simpleAppEntry);
           });
 
         app.listen(TENANT_PORT, '127.0.0.1');
@@ -94,8 +132,18 @@ describe('Authorize Test', () => {
         services: ['DiscoveryService'],
       };
 
-    let clientSecret = new TokenTestHelper().codeTenantSecret(tenantEntry, clientId);
-    tenantEntry.clientSecret = clientSecret;
+    let applicationEntry = {
+        status: 'Active',
+        timestamp: Date.now(),
+        name: 'MyApp',
+        apiKey: clientId,
+        scope: ['all'],
+    };
+
+    let tenantClientSecret = new TokenTestHelper().codeTenantSecret(tenantEntry, clientId);
+    let applicationClientSecret = new TokenTestHelper().codeApplicationSecret(applicationEntry, clientId);
+    tenantEntry.clientSecret = tenantClientSecret;
+    applicationEntry.clientSecret = applicationClientSecret;
 
     let tenantDescriptor = {
         docsPath: 'http://cloudfront.mydocs.com/tenant',
@@ -115,7 +163,9 @@ describe('Authorize Test', () => {
             securityService = server;
             return addTenant(tenantUrl, tenantEntry);
           }).then((tenant) => {
-            return mockTenantService(tenantEntry);
+            return addApplication(tenantUrl, applicationEntry);
+          }).then((application) => {
+            return mockTenantService(tenantEntry, applicationEntry);
           }).then((mock) => {
             mockTenantServer = mock;
             setTimeout(() => {
@@ -150,13 +200,36 @@ describe('Authorize Test', () => {
                   scope: ['all'],
                   grant_type: 'grant',
                   'x-client-id': clientId,
-                  'x-client-secret': clientSecret,
-                }, (response) => {
-                  done();
-                }, (err) => {
-                  console.log(err.status);
-                  done(err);
-                });
+                  'x-client-secret': tenantClientSecret,
+                }, verifyTenantAuthOk(done), verifyErrorMissing(done));
+            } else {
+              done(new Error('Missing Security Service'));
+            }
+
+          });
+      });
+
+    /**
+     * This test attempts to Authorize given a prepared Application (apikey/secret)
+     * The expectation is that the Application will be located and the auth request key/secret will
+     * match that of the Application.
+     */
+    it('auth succeeds - application', (done) => {
+        let service = {
+            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
+            schemaRoute: '/swagger.json',
+          };
+
+        let apiBinding = new ApiBinding(service);
+
+        apiBinding.bind().then((service) => {
+            if (service) {
+              service.api.oauth.authorise({
+                  scope: ['all'],
+                  grant_type: 'grant',
+                  'x-client-id': clientId,
+                  'x-client-secret': applicationClientSecret,
+                }, verifyApplicationAuthOk(done), verifyErrorMissing(done));
             } else {
               done(new Error('Missing Security Service'));
             }
@@ -169,7 +242,7 @@ describe('Authorize Test', () => {
      * The expectation is that the Tenant will be located but the auth request secret will
      * not match that of the Tenant. This should result in a 403.
      */
-    it('auth fails forbiddend', (done) => {
+    it('auth fails forbidden - bad secret', (done) => {
         let service = {
             endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
             schemaRoute: '/swagger.json',
@@ -205,7 +278,7 @@ describe('Authorize Test', () => {
      * The expectation is that the Tenant will be located but the auth request key will
      * not match any Tenant in the system.  This should result in a 401.
      */
-    it('auth fails unauth', (done) => {
+    it('auth fails forbidden - bad apiKey', (done) => {
         let service = {
             endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
             schemaRoute: '/swagger.json',
@@ -219,14 +292,14 @@ describe('Authorize Test', () => {
                   scope: ['all'],
                   grant_type: 'grant',
                   'x-client-id': 'foo',
-                  'x-client-secret': clientSecret,
+                  'x-client-secret': tenantClientSecret,
                 }, (response) => {
                   done();
                 }, (err) => {
-                  if (err.status === HttpStatus.UNAUTHORIZED) {
+                  if (err.status === HttpStatus.FORBIDDEN) {
                     done();
                   } else {
-                    done(new Error(`Expecting status 401, received ${err.status}`));
+                    done(new Error(`Expecting status 403, received ${err.status}`));
                   }
                 });
             } else {

@@ -6,6 +6,54 @@
   },
   "swagger": "2.0",
   "paths": {
+    "/apps/_apiKey/{apiKey}": {
+      "get": {
+        "summary": "Get Application By Api Key",
+        "description": "Get Application By Api Key",
+        "operationId": "getApplicationByApiKey",
+        "tags": [
+          "applications"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "apiKey",
+            "description": "Api Key of Application",
+            "type": "string",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "x-fast-pass",
+            "description": "Bypass Auth",
+            "type": "boolean",
+            "in": "header",
+            "require": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Application"
+            }
+          },
+          "404": {
+            "description": "Error",
+            "type": "object",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/tenants/_apiKey/{apiKey}": {
       "get": {
         "summary": "Get Tenant By Api Key",
@@ -96,6 +144,50 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/ServiceName"
+          }
+        },
+        "timestamp": {
+          "type": "number",
+          "format": "date"
+        }
+      }
+    },
+    "Application": {
+      "type": "object",
+      "required": [
+        "name",
+        "timestamp",
+        "status",
+        "apiKey",
+        "apiSecret",
+        "scope"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "apiKey": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "apiSecret": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "timestamp": {
