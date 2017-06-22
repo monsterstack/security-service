@@ -1,50 +1,50 @@
 'use strict';
 const ApiBinding = require('discovery-proxy').ApiBinding;
-const assert = require('assert');
-const startTestService = require('discovery-test-tools').startTestService;
+const assert = require('service-test-helpers').Assert;
+const ServiceTestHelper = require('service-test-helpers').ServiceTestHelper;
+
 const jwt = require('jsonwebtoken');
 const sha1 = require('sha1');
 const model = require('security-model').model;
 const sideLoadTenantDescriptor = require('discovery-test-tools').sideLoadServiceDescriptor;
 
+const newTenantDescriptor = require('data-test-helpers').newTenantDescriptor;
+
 const TENANT_PORT = 8718;
 
 const SECRET = 'shhhhhh!';
 
-const startSecurityService = () => {
-    let p = new Promise((resolve, reject) => {
-        startTestService('SecurityService', {}, (err, server) => {
-            resolve(server);
-          });
-      });
-    return p;
+const verifyCheckOkResponseAndValid = (done) => {
+  return (response) => {
+    assert.assertEquals(response.status, 200, 'Expected 200 - Ok');
+    assert.assertFieldExists('valid', response.obj, 'Expected validity.valid exists');
+    assert.assertEquals(response.obj.valid, true, 'Expected validity.valid === true');
+    done();
   };
+};
+
+const verifyCheckOkResponseAndInvalid = (done) => {
+  return (response) => {
+    assert.assertEquals(response.status, 200, 'Expected 200 - Ok');
+    assert.assertFieldExists('valid', response.obj, 'Expected validity.valid exists');
+    assert.assertEquals(response.obj.valid, false, 'Expected validity.valid === false');
+    done();
+  };
+};
+
+const verifyErrorMissing = (done) => {
+  return (err) => {
+    done(new Error('Expected no errors'));
+  };
+};
 
 describe('check-token', () => {
-    /**
-     * Setup all Test Fixtures
-     * Security Url
-     * Security Service Descriptor
-     * Client Id
-     * Client Secret
-     * Auth Request
-     */
     let securityUrl = 'mongodb://localhost:27017/cdspSecurity';
     let securityService = null;
     let clearSecurityDB = require('mocha-mongoose')(securityUrl, { noClear: true });
 
-    let tenantDescriptor = {
-        docsPath: 'http://cloudfront.mydocs.com/tenant',
-        endpoint: `http://localhost:${TENANT_PORT}`,
-        healthCheckRoute:  '/health',
-        region:  'us-east-1',
-        schemaRoute:  '/swagger.json',
-        stage:  'dev',
-        status:  'Online',
-        timestamp: Date.now(),
-        type:  'TenantService',
-        version:  'v1',
-      };
+    let serviceTestHelper = new ServiceTestHelper();
+    let tenantDescriptor = newTenantDescriptor(TENANT_PORT);
 
     let token;
 
@@ -62,86 +62,44 @@ describe('check-token', () => {
         // Need to shove access_token into db.
         token = jwt.sign(JSON.stringify(authReq), SECRET);
         let hash = sha1(token);
-        model.saveAccessToken({
-            access_token: token,
-            hash: hash,
-            name: 'Fubu',
-            scope: ['all'],
-          }).then((access) => {
-          return startSecurityService();
+        let accessToken = {
+          access_token: token,
+          hash: hash,
+          name: 'Fubu',
+          scope: ['all'],
+        };
+
+        model.saveAccessToken(accessToken).then((access) => {
+          return serviceTestHelper.startTestService('TenantService', {});
         }).then((server) => {
             securityService = server;
-            setTimeout(() => {
-                securityService.getApp().dependencies = { types: ['TenantService'] };
+            securityService.getApp().dependencies = { types: ['TenantService'] };
 
-                sideLoadTenantDescriptor(securityService, tenantDescriptor).then(() => {
-                    done();
-                  }).catch((err) => {
-                    done(err);
-                  });
-              }, 1500);
+            sideLoadTenantDescriptor(securityService, tenantDescriptor).then(() => {
+              done();
+            }).catch((err) => {
+              done(err);
+            });
           }).catch((err) => {
             done(err);
           });
       });
 
     it('auth validity check succeeds', (done) => {
-        let securityDescriptor = {
-            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
-            schemaRoute: '/swagger.json',
-          };
-        let apiBinding = new ApiBinding(securityDescriptor);
-
-        apiBinding.bind().then((service) => {
-            if (service) {
-              service.api.tokens.check({
-                  'access-token': token,
-                }, (response) => {
-                  if (response.status != 200) {
-                    done(new Error(`Expected Response Status 200 - got ${response.status}`));
-                  } else if (response.obj.valid !== true) {
-                    done(new Error(`Expected Response token validity ${response.obj.valid} to be equal to  true`));
-                  } else {
-                    done();
-                  }
-                }, (err) => {
-                  done(err);
-                });
-            } else {
-              done(new Error('Missing Security Service'));
-            }
-
-          });
+      serviceTestHelper.bindToGenericService(securityService.getApp().listeningPort).then((service) => {
+        let request = { 'access-token': token };
+        service.api.tokens.check(request, verifyCheckOkResponseAndValid(done), verifyErrorMissing(done));
       });
+    });
 
     it('auth validity check fails', (done) => {
-        let securityDescriptor = {
-            endpoint: `http://localhost:${securityService.getApp().listeningPort}`,
-            schemaRoute: '/swagger.json',
-          };
-        let apiBinding = new ApiBinding(securityDescriptor);
-
-        apiBinding.bind().then((service) => {
-            if (service) {
-              service.api.tokens.check({
-                  'access-token': token.substring(0, 10),
-                }, (response) => {
-                  if (response.status != 200) {
-                    done(new Error(`Expected Response Status 200 - got ${response.status}`));
-                  } else if (response.obj.valid !== false) {
-                    done(new Error(`Expected Response token validity ${response.obj.valid} to be equal to  false`));
-                  } else {
-                    done();
-                  }
-                }, (err) => {
-                  done(err);
-                });
-            } else {
-              done(new Error('Missing Security Service'));
-            }
-
-          });
+      serviceTestHelper.bindToGenericService(securityService.getApp().listeningPort).then((service) => {
+        let request = {
+          'access-token': token.substring(0, 10),
+        };
+        service.api.tokens.check(request, verifyCheckOkResponseAndInvalid(done), verifyErrorMissing(done));
       });
+    });
 
     after((done) => {
         securityService.getHttp().close();

@@ -34,14 +34,10 @@ const authorise = (app) => {
     authService.authorise(authRequest).then((authResponse) => {
       res.status(HttpStatus.OK).send(authResponse);
     }).catch((err) => {
-      if (err.status) {
-        if (err instanceof ServiceError) {
-          err.writeResponse(res);
-        } else {
-          new ServiceError(err.status, err.message || err.errorMessage).writeResponse(res);
-        }
+      if (err instanceof ServiceError) {
+        err.writeResponse(res);
       } else {
-        new ServiceError(HttpStatus.INTERNAL_SERVER_ERROR, err.message || err.errorMessage).writeResponse(res);
+        new ServiceError(err.status, err.message || err.errorMessage).writeResponse(res);
       }
     });
   };
@@ -53,10 +49,12 @@ const token = (app) => {
     let authService = new AuthService();
     authService.token(tokenHashAccessCode).then((token) => {
       if (token) {
-        res.status(HttpStatus.OK).send(token);
+        return token;
       } else {
-        new ServiceError(HttpStatus.NOT_FOUND, 'Token Not Found').writeResponse(res);
+        throw new ServiceError(HttpStatus.NOT_FOUND, 'Token Not Found');
       }
+    }).then((token) => {
+      res.status(HttpStatus.OK).send(token);
     }).catch((err) => {
       if (err.status) {
         if (err instanceof ServiceError) {
@@ -77,10 +75,11 @@ const isTokenValid = (app) => {
     let authService = new AuthService();
     let accessToken = req.headers['access-token'];
     authService.check(accessToken).then((validity) => {
-      res.status(HttpStatus.OK).send({
+      let validityObj = {
         valid: validity.valid,
         tenantName: validity.tenantName,
-      });
+      };
+      res.status(HttpStatus.OK).send(validityObj);
     }).catch((err) => {
       if (error instanceof ServiceError) {
         error.writeResponse(res);

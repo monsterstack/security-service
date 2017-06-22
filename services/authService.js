@@ -42,8 +42,9 @@ class AuthService {
           else
              throw new ServiceError(HttpStatus.FORBIDDEN, 'Invalid Client Secret');
         }).then((resource) => {
-            return _this._storeAuthToken(resource.name, authRequest);
-          }).then((signedRequest) => {
+          // If the resource has a tenantName (i.e application) otherwise it is a tenant so use name
+          return _this._storeAuthToken(resource.tenantName || resource.name, authRequest);
+        }).then((signedRequest) => {
           return _this._buildAuthResponse(signedRequest, authRequest);
         }).then((authResponse) => {
           resolve(authResponse);
@@ -127,7 +128,7 @@ class AuthService {
         access_token: accessToken,
         hash: hash,
         scope: scope,
-        name: name,
+        tenantName: name,
       };
       _this.model.saveAccessToken(accessTokenModel).then((token) => {
         resolve(token);
